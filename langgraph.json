@@ -1,7 +1,10 @@
 {
     "dependencies": ["."],
     "graphs": {
-        "blog_generator_agent": "./src/graphs/graph_builder.py:graph"
+        "query_graph": "./src/graphs/queryGraph.py:graph",
+        "execution_agent_graph": "./src/graphs/actionGraph.py:graph",
+        "master_graph": "./src/graphs/masterGraph.py:master_graph",
+        "finalSparrowAgent": "./src/graphs/finalAgentGraph.py:sparrowAgent"
     },
     "env": "./env"
 }
