@@ -1,10 +1,7 @@
 {
     "dependencies": ["."],
     "graphs": {
-        "query_graph": "./src/graphs/queryGraph.py:graph",
-        "execution_agent_graph": "./src/graphs/actionGraph.py:graph",
-        "master_graph": "./src/graphs/masterGraph.py:master_graph",
-        "finalSparrowAgent": "./src/graphs/finalAgentGraph.py:sparrowAgent"
+        "data_retrieval_agent_graph": "./src/graphs/dataRetrievalAgentGraph.py:graph"
     },
     "env": "./env"
 }
