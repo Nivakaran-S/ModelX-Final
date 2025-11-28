@@ -1,7 +1,8 @@
 {
     "dependencies": ["."],
     "graphs": {
-        "data_retrieval_agent_graph": "./src/graphs/dataRetrievalAgentGraph.py:graph"
+        "data_retrieval_agent_graph": "./src/graphs/dataRetrievalAgentGraph.py:graph",
+        "meteorological_agent_graph": "./src/graphs/meteorologicalAgentGraph.py:graph"
     },
     "env": "./env"
 }

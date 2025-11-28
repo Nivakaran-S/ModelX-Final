@@ -23,6 +23,102 @@ DEFAULT_HEADERS = {
 }
 
 
+def _safe_get(url: str, timeout: int = 10) -> Optional[requests.Response]:
+    try:
+        r = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
+        if r.status_code == 200:
+            return r
+        return None
+    except Exception:
+        return None
+
+
+def tool_dmc_alerts() -> Dict[str, Any]:
+    """
+    DMC alert scraper – matches the 'DMC alert scraper' box in the diagram.
+    """
+    url = "http://www.meteo.gov.lk/index.php?lang=en"
+    resp = _safe_get(url)
+    if not resp:
+        return {
+            "source": url,
+            "alerts": ["Failed to fetch alerts from DMC."],
+            "fetched_at": datetime.utcnow().isoformat(),
+        }
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    alerts: List[str] = []
+
+    keywords = [
+        "warning",
+        "advisory",
+        "alert",
+        "heavy rain",
+        "strong wind",
+        "thunderstorm",
+        "flood",
+        "landslide",
+    ]
+
+    for text in soup.find_all(string=True):
+        t = text.strip()
+        if not t or len(t) < 20:
+            continue
+        lower = t.lower()
+        if any(k in lower for k in keywords):
+            alerts.append(t)
+
+    if not alerts:
+        alerts = ["No active severe weather alerts detected on the DMC site."]
+
+    return {
+        "source": url,
+        "alerts": alerts,
+        "fetched_at": datetime.utcnow().isoformat(),
+    }
+
+
+def tool_weather_nowcast(location: str = "Colombo") -> Dict[str, Any]:
+    """
+    Weather nowcast scraper – matches the 'Weather Nowcast' box in the diagram.
+    """
+    # Example: general forecast page; adjust URL/selectors as needed.
+    url = (
+        "http://www.meteo.gov.lk/index.php?"
+        "option=com_content&view=article&id=95&Itemid=312&lang=en"
+    )
+    resp = _safe_get(url)
+    if not resp:
+        return {
+            "location": location,
+            "forecast": "Failed to fetch forecast.",
+            "source": url,
+            "fetched_at": datetime.utcnow().isoformat(),
+        }
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    container = (
+        soup.find("div", {"id": "k2Container"})
+        or soup.find("div", class_="article-content")
+        or soup.body
+    )
+
+    text = container.get_text(separator="\n", strip=True) if container else ""
+    if not text:
+        text = "No forecast text found on the page."
+
+    # Truncate to keep state light
+    text = text[:4000]
+
+    return {
+        "location": location,
+        "forecast": text,
+        "source": url,
+        "fetched_at": datetime.utcnow().isoformat(),
+    }
+
+
+
 def _contains_keyword(text: str, keywords: List[str]) -> bool:
     if not keywords:
         return True

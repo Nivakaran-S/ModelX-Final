@@ -87,13 +87,9 @@ print("Data Retrieval Agent Graph built successfully.")
 
 if __name__ == "__main__":
     print("--- Starting Data Retrieval Agent Graph Execution ---")
-    
-    # The graph is self-starting and doesn't require an initial input.
     initial_state = {}
 
     try:
-        # The graph will stream events as it executes.
-        # Let's capture the final state.
         final_state = None
         for event in graph.stream(initial_state):
             if "__end__" in event:
