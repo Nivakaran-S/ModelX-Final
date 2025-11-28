@@ -36,15 +36,15 @@ jobs:
           HF_SPACE: modelx
         run: |
           git branch -M main
-          git push https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE main --force
-          if [ $? -ne 0 ]; then 
-            echo "Push failed - check token and permissions"
-            exit 1
-          fi
+
+          # Correct Hugging Face authentication format
+          git remote add hf https://$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE
+
+          git push hf main --force
 
       - name: Verify Sync
         if: success()
-        run: echo "successfully synced to Hugging Face Space!"
+        run: echo "Successfully synced to Hugging Face Space!"
 
       - name: Sync Failed
         if: failure()
