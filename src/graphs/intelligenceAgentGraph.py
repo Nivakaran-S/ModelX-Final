@@ -15,7 +15,7 @@ from src.nodes.intelligenceAgentNode import intelligenceAgentNode
 from src.utils.utils import tool_dmc_alerts, tool_weather_nowcast
 from src.llms.groqllm import GroqLLM
 
-class EconomicalGraphBuilder:
+class IntelligenceGraphBuilder:
     def __init__(self, llm):
         self.llm = llm
     
@@ -69,6 +69,6 @@ class EconomicalGraphBuilder:
 # ============================================================
 print("--- RUNNING METEOROLOGICAL AGENT GRAPH ---\n")
 llm = GroqLLM().get_llm()
-graph = EconomicalGraphBuilder(llm).build_graph()
+graph = IntelligenceGraphBuilder(llm).build_graph()
 print("Graph created successfully")
 
