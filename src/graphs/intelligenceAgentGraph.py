@@ -67,8 +67,8 @@ class IntelligenceGraphBuilder:
 # ============================================================
 # RUN (for manual test)
 # ============================================================
-print("--- RUNNING METEOROLOGICAL AGENT GRAPH ---\n")
+print("--- RUNNING INTELLIGENCE AGENT GRAPH ---\n")
 llm = GroqLLM().get_llm()
 graph = IntelligenceGraphBuilder(llm).build_graph()
-print("Graph created successfully")
+print("INTELLIGENCE Graph created successfully")
 

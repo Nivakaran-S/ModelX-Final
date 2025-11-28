@@ -67,8 +67,8 @@ class SocialGraphBuilder:
 # ============================================================
 # RUN (for manual test)
 # ============================================================
-print("--- RUNNING METEOROLOGICAL AGENT GRAPH ---\n")
+print("--- RUNNING SOCIAL AGENT GRAPH ---\n")
 llm = GroqLLM().get_llm()
 graph = SocialGraphBuilder(llm).build_graph()
-print("Graph created successfully")
+print("SOCIAL AGENT Graph created successfully")
 

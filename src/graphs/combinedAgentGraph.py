@@ -74,8 +74,8 @@ class CombinedAgentGraphBuilder:
 # ============================================================
 # RUN (for manual test)
 # ============================================================
-print("--- RUNNING METEOROLOGICAL AGENT GRAPH ---\n")
+print("--- RUNNING COMBINED AGENT GRAPH ---\n")
 llm = GroqLLM().get_llm()
 graph = CombinedAgentGraphBuilder(llm).build_graph()
-print("Graph created successfully")
+print("COMBINED AGENT Graph created successfully")
 

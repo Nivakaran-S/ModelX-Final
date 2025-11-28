@@ -67,8 +67,8 @@ class PoliticalGraphBuilder:
 # ============================================================
 # RUN (for manual test)
 # ============================================================
-print("--- RUNNING METEOROLOGICAL AGENT GRAPH ---\n")
+print("--- RUNNING POLITICAL AGENT GRAPH ---\n")
 llm = GroqLLM().get_llm()
 graph = PoliticalGraphBuilder(llm).build_graph()
-print("Graph created successfully")
+print("POLITICAL AGENT Graph created successfully")
 

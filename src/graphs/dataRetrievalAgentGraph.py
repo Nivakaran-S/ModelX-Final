@@ -85,24 +85,5 @@ print("Data Retrieval Agent Graph built successfully.")
 
 
 
-if __name__ == "__main__":
-    print("--- Starting Data Retrieval Agent Graph Execution ---")
-    initial_state = {}
 
-    try:
-        final_state = None
-        for event in graph.stream(initial_state):
-            if "__end__" in event:
-                final_state = event["__end__"]
-
-        if final_state:
-            print("\n\n=== FINAL OUTPUT ===")
-            print(f"Total Tasks Executed: {len(final_state.worker_results)}")
-            if final_state.classified_buffer:
-                for event in final_state.classified_buffer:
-                    print(f"[{event.target_agent.upper()}] {event.content_summary}")
-    except Exception as e:
-        import traceback
-        print(f"\nAn error occurred during graph execution: {e}")
-        traceback.print_exc()
 

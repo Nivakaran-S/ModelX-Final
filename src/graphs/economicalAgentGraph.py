@@ -67,8 +67,8 @@ class EconomicalGraphBuilder:
 # ============================================================
 # RUN (for manual test)
 # ============================================================
-print("--- RUNNING METEOROLOGICAL AGENT GRAPH ---\n")
+print("--- RUNNING ECONOMICAL AGENT GRAPH ---\n")
 llm = GroqLLM().get_llm()
 graph = EconomicalGraphBuilder(llm).build_graph()
-print("Graph created successfully")
+print("ECONOMICAL Graph created successfully")
 
