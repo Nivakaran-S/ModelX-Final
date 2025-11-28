@@ -37,8 +37,8 @@ jobs:
         run: |
           git branch -M main
 
-          # Correct Hugging Face authentication format
-          git remote add hf https://$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE
+          # Correct authentication format: username + token
+          git remote add hf https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE
 
           git push hf main --force
 
