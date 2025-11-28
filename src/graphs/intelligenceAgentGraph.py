@@ -10,8 +10,8 @@ from bs4 import BeautifulSoup
 from typing_extensions import Annotated
 
 from langgraph.graph import StateGraph, END
-from src.states.economicalAgentState import EconomicalAgentState
-from src.nodes.economicalAgentNode import economicalAgentNode
+from src.states.intelligenceAgentState import IntelligenceAgentState
+from src.nodes.intelligenceAgentNode import intelligenceAgentNode
 from src.utils.utils import tool_dmc_alerts, tool_weather_nowcast
 from src.llms.groqllm import GroqLLM
 
@@ -20,8 +20,8 @@ class EconomicalGraphBuilder:
         self.llm = llm
     
     def build_graph(self):
-        meteorology_obj = economicalAgentNode(self.llm)
-        worker_graph_builder = StateGraph(EconomicalAgentState)
+        meteorology_obj = intelligenceAgentNode(self.llm)
+        worker_graph_builder = StateGraph(IntelligenceAgentState)
         worker_graph_builder.add_node("meteorological_worker", meteorology_obj.meteorological_worker_agent)
         worker_graph_builder.add_node("tool_node", meteorology_obj.tool_node)
 
@@ -35,7 +35,7 @@ class EconomicalGraphBuilder:
         # BUILD MAIN METEOROLOGICAL AGENT GRAPH
         # ============================================================
 
-        main_graph_builder = StateGraph(EconomicalAgentState)
+        main_graph_builder = StateGraph(IntelligenceAgentState)
 
         # Nodes
         main_graph_builder.add_node("data_change_detector", meteorology_obj.data_change_detector)
