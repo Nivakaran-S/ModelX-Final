@@ -10,3 +10,6 @@ langgraph-cli[inmem]
 streamlit
 yfinance
 bs4
+flask
+flask-cors
+pydantic

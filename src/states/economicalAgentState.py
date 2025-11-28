@@ -7,26 +7,6 @@ from langgraph.graph import MessagesState
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
-class EconomicalAgentState(TypedDict, total=False):
-    # --- Orchestrator / worker bookkeeping ---
-    generated_tasks: List[Dict[str, Any]]
-    current_task: Optional[Dict[str, Any]]
-    tasks_for_workers: List[Dict[str, Any]]
-    worker: Optional[List[Dict[str, Any]]]
-
-    # --- Results from tools ---
-    worker_results: Annotated[List[Dict[str, Any]], operator.add]
-    latest_worker_results: List[Dict[str, Any]]
-
-    # --- Change detection metadata ---
-    last_alerts_hash: Optional[int]
-    change_detected: bool
-
-    # --- Feed ---
-    final_feed: str
-    feed_history: Annotated[List[str], operator.add]
-
-
 # ==========================================
 # 1. SHARED & FINAL OUTPUT MODELS
 # ==========================================
@@ -54,6 +34,30 @@ class ClassifiedEvent(BaseModel):
     content_summary: str
     target_agent: str
     confidence_score: float
+
+
+class EconomicalAgentState(TypedDict, total=False):
+    # --- Orchestrator / worker bookkeeping ---
+    generated_tasks: List[Dict[str, Any]]
+    current_task: Optional[Dict[str, Any]]
+    tasks_for_workers: List[Dict[str, Any]]
+    worker: Optional[List[Dict[str, Any]]]
+
+    # --- Results from tools ---
+    worker_results: Annotated[List[Dict[str, Any]], operator.add]
+    latest_worker_results: List[Dict[str, Any]]
+
+    # --- Change detection metadata ---
+    last_alerts_hash: Optional[int]
+    change_detected: bool
+
+    # --- Feed ---
+    final_feed: str
+    feed_history: Annotated[List[str], operator.add]
+    
+    # --- Integration with Main Graph ---
+    # ADDED: Critical for passing data to the FeedAggregator
+    domain_insights: List[Dict[str, Any]]
 
 
 class ModelXAgentState(MessagesState):

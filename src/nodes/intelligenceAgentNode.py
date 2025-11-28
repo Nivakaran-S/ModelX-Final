@@ -91,17 +91,17 @@ class intelligenceAgentNode:
                 }
             )
 
-        print(f"   → Planned {len(tasks)} tasks for Meteorological Worker Agents.")
+        print(f"   → Planned {len(tasks)} tasks for Intelligence Worker Agents.")
 
         return {"generated_tasks": tasks}
 
 
-    def meteorological_worker_agent(
+    def intelligence_worker_agent(
             self,
         state: IntelligenceAgentState,
     ) -> Dict[str, Any]:
         """
-        METEOROLOGICAL WORKER AGENT
+        Intelligence WORKER AGENT
 
         - Pops a single task from `generated_tasks` for this worker instance.
         - In the mapped worker graph, each instance handles exactly one task.
@@ -172,14 +172,14 @@ class intelligenceAgentNode:
         Prepares the list of tasks for parallel worker execution.
 
         - Each entry in `tasks_for_workers` is an initial state for a worker graph
-        that will run `meteorological_worker_agent` + `tool_node`.
+        that will run `Intelligence_worker_agent` + `tool_node`.
         """
         tasks = state.get("generated_tasks", [])
         initial_states = [{"generated_tasks": [t]} for t in tasks]
 
         print(
             f"--- [PREPARE WORKER TASKS] Spawning {len(initial_states)} "
-            "parallel Meteorological Worker Agents ---"
+            "parallel Intelligence Worker Agents ---"
         )
 
         return {"tasks_for_workers": initial_states}
@@ -218,7 +218,7 @@ class intelligenceAgentNode:
         FEED CREATOR AGENT
 
         - Consumes all `worker_results` (DMC + nowcasts).
-        - Builds a consolidated meteorological feed and stores it in:
+        - Builds a consolidated Intelligence feed and stores it in:
             * `final_feed` – latest feed
             * `feed_history` – append-only history
         """
@@ -266,7 +266,7 @@ class intelligenceAgentNode:
             else "No significant change detected in severe weather alerts since last run.\n"
         )
 
-        bulletin = f"""🇱🇰 SRI LANKA METEOROLOGICAL FEED
+        bulletin = f"""🇱🇰 SRI LANKA Intelligence FEED
     {datetime.utcnow().strftime("%d %b %Y • %H:%M UTC")}
 
     {change_line}

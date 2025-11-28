@@ -56,36 +56,7 @@ class DataRetrievalAgentState(BaseModel):
     tasks_for_workers: List[Dict[str, Any]] = Field(default_factory=list)
     worker: Any = None
     latest_worker_results: List[RawScrapedData] = Field(default_factory=list)
-
-
-
-# ==========================================
-# 1. SHARED & FINAL OUTPUT MODELS
-# ==========================================
-
-class RiskMetrics(BaseModel):
-    """
-    Quantifiable indicators for the Operational Risk Radar.
-    """
-    logistics_friction: float = Field(default=0.0, description="Route risk score")
-    compliance_volatility: float = Field(default=0.0, description="Regulatory risk")
-    market_instability: float = Field(default=0.0, description="Volatility index")
-
-class DomainInsight(BaseModel):
-    """Output from a Domain Agent."""
-    source_event_id: str
-    domain: Literal["political", "mobility", "market", "weather", "social"]
-    severity: Literal["low", "medium", "high", "critical"] 
-    summary: str
-    risk_score: float = 0.0
-    actionable_advice: Optional[str] = None
-
-class ModelXAgentState(MessagesState):
-    """
-    Main state for the complete agentic AI system.
-    """
-    pending_events: List[ClassifiedEvent] = Field(default_factory=list)
-    domain_insights: Annotated[List[DomainInsight], operator.add]
-    final_ranked_feed: List[Dict] = Field(default_factory=list)
-    risk_dashboard_snapshot: RiskMetrics = Field(default_factory=RiskMetrics)
-    run_mode: Literal["background_monitor", "user_investigation"] = "background_monitor"
+    
+    # --- Integration with Main Graph ---
+    # ADDED: Critical for passing data to the FeedAggregator
+    domain_insights: List[Dict[str, Any]] = Field(default_factory=list)
