@@ -41,6 +41,9 @@ class ClassifiedEvent(BaseModel):
     content_summary: str
     target_agent: str
     confidence_score: float
+    # ADDED: To align with "Risk & Opportunity" requirement
+    severity: Literal["low", "medium", "high", "critical"] = "low"
+    impact_type: Literal["risk", "opportunity"] = "risk"
 
 
 class DataRetrievalAgentState(BaseModel):

@@ -2,6 +2,7 @@
 src/nodes/combinedAgentNode.py
 COMPLETE IMPLEMENTATION - Orchestration nodes for ModelX Mother Graph
 Implements: GraphInitiator, FeedAggregator, DataRefresher, DataRefreshRouter
+UPDATED: Supports 'Opportunity' tracking and new Scoring Logic
 """
 from __future__ import annotations
 import uuid
@@ -24,7 +25,7 @@ class CombinedAgentNode:
     
     Implements the Fan-In logic after domain agents complete:
     1. GraphInitiator - Starts each iteration & Clears previous state
-    2. FeedAggregator - Collects and ranks domain insights
+    2. FeedAggregator - Collects and ranks domain insights (Risks & Opportunities)
     3. DataRefresher - Updates risk dashboard
     4. DataRefreshRouter - Decides to loop or end
     """
@@ -76,7 +77,7 @@ class CombinedAgentNode:
         This implements the "Fan-In (Reduce Phase)" from your architecture:
         - Collects domain_insights from all agents
         - Deduplicates similar events
-        - Ranks by risk_score + severity
+        - Ranks by risk_score + severity + impact_type
         - Converts to ClassifiedEvent format
         
         Input: domain_insights (List[Dict]) from state
@@ -125,7 +126,7 @@ class CombinedAgentNode:
         
         logger.info(f"[FeedAggregatorAgent] After deduplication: {len(unique)} unique insights")
         
-        # Step 4: Rank by risk_score + severity boost
+        # Step 4: Rank by risk_score + severity boost + Opportunity Logic
         severity_boost_map = {
             "low": 0.0,
             "medium": 0.05,
@@ -134,11 +135,18 @@ class CombinedAgentNode:
         }
         
         def calculate_score(item: Dict[str, Any]) -> float:
-            """Calculate composite risk score"""
+            """Calculate composite score for Risks AND Opportunities"""
             base = float(item.get("risk_score", 0.0))
             severity = str(item.get("severity", "low")).lower()
+            impact = str(item.get("impact_type", "risk")).lower()
+            
             boost = severity_boost_map.get(severity, 0.0)
-            return base + boost
+            
+            # Opportunities are also "High Priority" events, so we boost them too
+            # to make sure they appear at the top of the feed
+            opp_boost = 0.2 if impact == "opportunity" else 0.0
+            
+            return base + boost + opp_boost
         
         # Sort descending by score
         ranked = sorted(unique, key=calculate_score, reverse=True)
@@ -147,8 +155,9 @@ class CombinedAgentNode:
         for i, ins in enumerate(ranked[:3]):
             score = calculate_score(ins)
             domain = ins.get("domain", "unknown")
+            impact = ins.get("impact_type", "risk")
             summary_preview = str(ins.get("summary", ""))[:80]
-            logger.info(f"  {i+1}. [{domain}] Score={score:.3f} | {summary_preview}...")
+            logger.info(f"  {i+1}. [{domain}] ({impact}) Score={score:.3f} | {summary_preview}...")
         
         # Step 5: Convert to ClassifiedEvent format for final feed
         converted: List[Dict[str, Any]] = []
@@ -162,6 +171,7 @@ class CombinedAgentNode:
                 "target_agent": ins.get("domain", "unknown"),
                 "confidence_score": round(calculate_score(ins), 3),
                 "severity": ins.get("severity", "medium"),
+                "impact_type": ins.get("impact_type", "risk"), # Preserve impact type
                 "timestamp": datetime.utcnow().isoformat()
             }
             converted.append(classified)
@@ -182,6 +192,7 @@ class CombinedAgentNode:
         - logistics_friction: Route risk from mobility data
         - compliance_volatility: Regulatory risk from political data  
         - market_instability: Volatility from economic data
+        - opportunity_index: NEW - Growth signals from positive events
         
         Input: final_ranked_feed
         Output: risk_dashboard_snapshot
@@ -190,64 +201,76 @@ class CombinedAgentNode:
         
         feed = getattr(state, "final_ranked_feed", [])
         
+        # Default snapshot structure
+        snapshot = {
+            "logistics_friction": 0.0,
+            "compliance_volatility": 0.0,
+            "market_instability": 0.0,
+            "opportunity_index": 0.0,
+            "avg_confidence": 0.0,
+            "high_priority_count": 0,
+            "total_events": 0,
+            "last_updated": datetime.utcnow().isoformat()
+        }
+        
         if not feed:
             logger.info("[DataRefresherAgent] Empty feed - returning zero metrics")
-            return {
-                "risk_dashboard_snapshot": {
-                    "logistics_friction": 0.0,
-                    "compliance_volatility": 0.0,
-                    "market_instability": 0.0,
-                    "avg_confidence": 0.0,
-                    "high_priority_count": 0,
-                    "total_events": 0,
-                    "last_updated": datetime.utcnow().isoformat()
-                }
-            }
+            return {"risk_dashboard_snapshot": snapshot}
         
         # Compute aggregate metrics
         confidences = [float(item.get("confidence_score", 0.0)) for item in feed]
         avg_confidence = sum(confidences) / len(confidences)
         high_priority_count = sum(1 for c in confidences if c >= 0.7)
         
-        # Domain-specific risk mapping
+        # Domain-specific scoring buckets
         domain_risks = {}
+        opportunity_scores = []
+        
         for item in feed:
             domain = item.get("target_agent", "unknown")
             score = item.get("confidence_score", 0.0)
+            impact = item.get("impact_type", "risk")
             
-            if domain not in domain_risks:
-                domain_risks[domain] = []
-            domain_risks[domain].append(score)
+            # Separate Opportunities from Risks
+            if impact == "opportunity":
+                opportunity_scores.append(score)
+            else:
+                # Group Risks by Domain
+                if domain not in domain_risks:
+                    domain_risks[domain] = []
+                domain_risks[domain].append(score)
         
+        # Helper for calculating averages safely
+        def safe_avg(lst):
+            return sum(lst) / len(lst) if lst else 0.0
+            
         # Calculate domain-specific risk scores
         # Mobility -> Logistics Friction
-        mobility_scores = domain_risks.get("mobility", [0.0])
-        logistics = sum(mobility_scores) / len(mobility_scores)
+        mobility_scores = domain_risks.get("mobility", []) + domain_risks.get("social", []) # Social unrest affects logistics
+        snapshot["logistics_friction"] = round(safe_avg(mobility_scores), 3)
         
         # Political -> Compliance Volatility
-        political_scores = domain_risks.get("political", [0.0])
-        compliance = sum(political_scores) / len(political_scores)
+        political_scores = domain_risks.get("political", [])
+        snapshot["compliance_volatility"] = round(safe_avg(political_scores), 3)
         
         # Market/Economic -> Market Instability
-        market_scores = domain_risks.get("market", [0.0]) + domain_risks.get("economical", [0.0])
-        if not market_scores:
-            market_scores = [0.0]
-        market = sum(market_scores) / len(market_scores)
+        market_scores = domain_risks.get("market", []) + domain_risks.get("economical", [])
+        snapshot["market_instability"] = round(safe_avg(market_scores), 3)
         
-        snapshot = {
-            "logistics_friction": round(logistics, 3),
-            "compliance_volatility": round(compliance, 3),
-            "market_instability": round(market, 3),
-            "avg_confidence": round(avg_confidence, 3),
-            "high_priority_count": high_priority_count,
-            "total_events": len(feed),
-            "last_updated": datetime.utcnow().isoformat()
-        }
+        # NEW: Opportunity Index
+        # Higher score means stronger positive signals
+        snapshot["opportunity_index"] = round(safe_avg(opportunity_scores), 3)
+        
+        snapshot["avg_confidence"] = round(avg_confidence, 3)
+        snapshot["high_priority_count"] = high_priority_count
+        snapshot["total_events"] = len(feed)
+        snapshot["last_updated"] = datetime.utcnow().isoformat()
         
         logger.info(f"[DataRefresherAgent] Dashboard Metrics:")
         logger.info(f"  Logistics Friction: {snapshot['logistics_friction']}")
         logger.info(f"  Compliance Volatility: {snapshot['compliance_volatility']}")
         logger.info(f"  Market Instability: {snapshot['market_instability']}")
+        logger.info(f"  Opportunity Index: {snapshot['opportunity_index']}")
         logger.info(f"  High Priority Events: {snapshot['high_priority_count']}/{snapshot['total_events']}")
         
         return {"risk_dashboard_snapshot": snapshot}

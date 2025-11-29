@@ -1,16 +1,17 @@
 """
 app.py
 Streamlit Dashboard for ModelX Platform
-Interactive interface to test and visualize the ModelX graph
+Interactive interface with Infinite Auto-Refresh & Smart Updates
 """
 import streamlit as st
 import json
+import hashlib
 from datetime import datetime
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import time
 
 # Import ModelX components
+# NOTE: Ensure these imports work in your local environment
 from src.graphs.ModelXGraph import graph
 from src.states.combinedAgentState import CombinedAgentState
 
@@ -31,43 +32,40 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    .main-header {
-        font-size: 2.5rem;
-        color: #1f77b4;
-        font-weight: bold;
+    .main-header { font-size: 2.5rem; color: #FAFAFA; font-weight: bold; text-align: center; margin-bottom: 1rem; }
+    .sub-header { font-size: 1.2rem; color: #aaaaaa; text-align: center; margin-bottom: 2rem; }
+    .stApp { background-color: #0e1117; color: #FAFAFA; }
+    
+    /* Severity Colors for Badges */
+    .severity-critical { color: #ff2b2b; font-weight: 800; }
+    .severity-high { color: #ff4444; font-weight: bold; }
+    .severity-medium { color: #ff9800; font-weight: bold; }
+    .severity-low { color: #4caf50; font-weight: bold; }
+    
+    /* Opportunity Color */
+    .impact-opportunity { color: #00CC96; font-weight: bold; }
+    
+    /* Loading Screen Animation */
+    @keyframes pulse {
+        0% { opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { opacity: 0.5; }
+    }
+    .loading-text {
+        color: #00CC96;
+        font-family: monospace;
+        font-size: 1.5rem;
         text-align: center;
-        margin-bottom: 1rem;
+        animation: pulse 2s infinite;
     }
-    .sub-header {
-        font-size: 1.2rem;
-        color: #666;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-    }
+    
+    /* Card Styling */
     .event-card {
-        background-color: #ffffff;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: 1px solid #e0e0e0;
-        margin-bottom: 1rem;
-    }
-    .severity-high {
-        color: #ff4444;
-        font-weight: bold;
-    }
-    .severity-medium {
-        color: #ff9800;
-        font-weight: bold;
-    }
-    .severity-low {
-        color: #4caf50;
-        font-weight: bold;
+        border-left: 4px solid #444;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #262730;
+        border-radius: 4px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -86,389 +84,278 @@ st.markdown('<div class="sub-header">National Situational Awareness Platform</di
 with st.sidebar:
     st.header("⚙️ Configuration")
     
-    st.subheader("Execution Settings")
-    max_iterations = st.slider("Max Iterations", 1, 10, 5)
-    
-    st.subheader("Monitoring Focus")
-    monitor_political = st.checkbox("Political Intelligence", value=True)
-    monitor_economic = st.checkbox("Economic Data", value=True)
-    monitor_weather = st.checkbox("Weather Alerts", value=True)
-    monitor_social = st.checkbox("Social Media", value=True)
-    monitor_intelligence = st.checkbox("Brand Intelligence", value=True)
+    # Auto-refresh interval
+    refresh_rate = st.slider("Polling Interval (s)", 5, 60, 10)
     
     st.divider()
     
-    st.subheader("About ModelX")
+    # Control Buttons
+    col_start, col_stop = st.columns(2)
+    with col_start:
+        if st.button("▶ START", type="primary", use_container_width=True):
+            st.session_state.monitoring_active = True
+            st.rerun()
+            
+    with col_stop:
+        if st.button("⏹ STOP", use_container_width=True):
+            st.session_state.monitoring_active = False
+            st.rerun()
+
+    st.divider()
     st.info("""
-    **Team Adagard**  
-    Open Innovation Track
+    **Team Adagard** Open Innovation Track
     
     ModelX transforms national-scale noise into actionable business intelligence using autonomous multi-agent architecture.
     """)
+    st.code("START → Fan-Out → [Agents] → Fan-In → Dashboard → Loop", language="text")
+
+# ============================================
+# SESSION STATE INITIALIZATION
+# ============================================
+
+if "monitoring_active" not in st.session_state:
+    st.session_state.monitoring_active = False
+if "latest_result" not in st.session_state:
+    st.session_state.latest_result = None
+if "last_hash" not in st.session_state:
+    st.session_state.last_hash = ""
+if "execution_count" not in st.session_state:
+    st.session_state.execution_count = 0
+
+# ============================================
+# HELPER FUNCTIONS
+# ============================================
+
+def calculate_hash(data_dict):
+    """Creates a hash of the dashboard data to detect changes."""
+    # We focus on the snapshot and the feed length/content
+    snapshot = data_dict.get("risk_dashboard_snapshot", {})
+    feed = data_dict.get("final_ranked_feed", [])
     
-    st.subheader("Architecture")
-    st.code("""
-START → GraphInitiator
-  ↓ (Fan-Out)
-6 Domain Agents (Parallel)
-  ↓ (Fan-In)
-FeedAggregator → Dashboard
-  ↓
-Router (Loop/End)
-    """, language="text")
+    # Create a simplified string representation to hash
+    content_str = f"{snapshot.get('last_updated')}-{len(feed)}-{snapshot.get('opportunity_index')}"
+    return hashlib.md5(content_str.encode()).hexdigest()
 
-# ============================================
-# MAIN CONTENT
-# ============================================
-
-# Initialize session state
-if "execution_history" not in st.session_state:
-    st.session_state.execution_history = []
-
-if "current_result" not in st.session_state:
-    st.session_state.current_result = None
-
-# ============================================
-# EXECUTION CONTROL
-# ============================================
-
-col1, col2, col3 = st.columns([1, 1, 1])
-
-with col1:
-    if st.button("🚀 Run ModelX Analysis", type="primary", use_container_width=True):
-        with st.spinner("🔄 Executing ModelX platform..."):
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            try:
-                # Update progress
-                status_text.text("Initializing agents...")
-                progress_bar.progress(20)
-                time.sleep(0.5)
-                
-                # Create initial state
-                initial_state = CombinedAgentState(max_runs=max_iterations)
-                
-                status_text.text("Running Fan-Out/Fan-In execution...")
-                progress_bar.progress(40)
-                
-                # Execute graph
-                result = graph.invoke(initial_state)
-                
-                status_text.text("Processing results...")
-                progress_bar.progress(80)
-                time.sleep(0.3)
-                
-                # Store result
-                st.session_state.current_result = result
-                st.session_state.execution_history.append({
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "result": result
-                })
-                
-                progress_bar.progress(100)
-                status_text.text("✅ Execution completed!")
-                time.sleep(0.5)
-                status_text.empty()
-                progress_bar.empty()
-                
-                st.success("Analysis completed successfully!")
-                st.rerun()
-                
-            except Exception as e:
-                st.error(f"❌ Execution failed: {str(e)}")
-                st.exception(e)
-
-with col2:
-    if st.button("📊 View JSON Export", use_container_width=True):
-        if st.session_state.current_result:
-            st.session_state.show_json = True
-        else:
-            st.warning("No results available. Run analysis first.")
-
-with col3:
-    if st.button("🗑️ Clear History", use_container_width=True):
-        st.session_state.execution_history = []
-        st.session_state.current_result = None
-        st.rerun()
-
-# ============================================
-# RESULTS DISPLAY
-# ============================================
-
-if st.session_state.current_result:
-    result = st.session_state.current_result
-    
-    st.divider()
-    
-    # ========== RISK DASHBOARD ==========
-    st.header("📊 Operational Risk Radar")
-    
+def render_dashboard(container, result):
+    """Renders the entire dashboard into the provided container."""
     snapshot = result.get("risk_dashboard_snapshot", {})
-    
-    # Metrics row
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        logistics = snapshot.get("logistics_friction", 0.0)
-        st.metric(
-            "Logistics Friction",
-            f"{logistics:.3f}",
-            delta=None,
-            help="Route risk score from mobility data"
-        )
-    
-    with col2:
-        compliance = snapshot.get("compliance_volatility", 0.0)
-        st.metric(
-            "Compliance Volatility",
-            f"{compliance:.3f}",
-            delta=None,
-            help="Regulatory risk from political data"
-        )
-    
-    with col3:
-        market = snapshot.get("market_instability", 0.0)
-        st.metric(
-            "Market Instability",
-            f"{market:.3f}",
-            delta=None,
-            help="Market volatility from economic data"
-        )
-    
-    with col4:
-        high_priority = snapshot.get("high_priority_count", 0)
-        total_events = snapshot.get("total_events", 0)
-        st.metric(
-            "High Priority Events",
-            f"{high_priority}/{total_events}",
-            delta=None,
-            help="Events with confidence >= 0.7"
-        )
-    
-    # Risk Visualization
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(
-        x=["Logistics", "Compliance", "Market"],
-        y=[logistics, compliance, market],
-        marker_color=['#ff9800', '#f44336', '#2196f3'],
-        text=[f"{logistics:.3f}", f"{compliance:.3f}", f"{market:.3f}"],
-        textposition='auto',
-    ))
-    
-    fig.update_layout(
-        title="Risk Metrics Overview",
-        yaxis_title="Risk Score",
-        xaxis_title="Domain",
-        height=300,
-        showlegend=False
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    st.divider()
-    
-    # ========== NATIONAL ACTIVITY FEED ==========
-    st.header("📰 National Activity Feed")
-    
     feed = result.get("final_ranked_feed", [])
     
-    if not feed:
-        st.info("No events detected in current scan.")
-    else:
-        # Feed statistics
-        col1, col2, col3 = st.columns(3)
+    # Clear the container to ensure clean re-render
+    container.empty()
+    
+    with container.container():
+        st.divider()
         
-        with col1:
-            st.metric("Total Events", len(feed))
+        # -------------------------------------------------------------------------
+        # 1. METRICS ROW
+        # -------------------------------------------------------------------------
+        st.subheader("📊 Operational Metrics")
+        m1, m2, m3, m4 = st.columns(4)
         
-        with col2:
-            domains = [e.get("target_agent", "unknown") for e in feed]
-            unique_domains = len(set(domains))
-            st.metric("Active Domains", unique_domains)
+        with m1:
+            st.metric("Logistics Friction", f"{snapshot.get('logistics_friction', 0):.3f}", help="Route risk score")
+        with m2:
+            st.metric("Compliance Volatility", f"{snapshot.get('compliance_volatility', 0):.3f}", help="Regulatory risk")
+        with m3:
+            st.metric("Market Instability", f"{snapshot.get('market_instability', 0):.3f}", help="Economic volatility")
+        with m4:
+            opp_val = snapshot.get("opportunity_index", 0.0)
+            st.metric("Opportunity Index", f"{opp_val:.3f}", delta="Growth Signal" if opp_val > 0.5 else "Neutral", delta_color="normal")
+
+        # -------------------------------------------------------------------------
+        # 2. RADAR CHART
+        # -------------------------------------------------------------------------
+        st.divider()
+        c1, c2 = st.columns([1, 1])
         
-        with col3:
-            avg_conf = sum(e.get("confidence_score", 0) for e in feed) / len(feed)
-            st.metric("Avg Confidence", f"{avg_conf:.3f}")
-        
-        # Domain distribution chart
-        domain_counts = {}
-        for event in feed:
-            domain = event.get("target_agent", "unknown")
-            domain_counts[domain] = domain_counts.get(domain, 0) + 1
-        
-        fig_domains = go.Figure(data=[go.Pie(
-            labels=list(domain_counts.keys()),
-            values=list(domain_counts.values()),
-            hole=0.3
-        )])
-        
-        fig_domains.update_layout(
-            title="Events by Domain",
-            height=300
-        )
-        
-        st.plotly_chart(fig_domains, use_container_width=True)
-        
-        # Filter options
-        st.subheader("Filter Events")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            severity_filter = st.multiselect(
-                "Severity",
-                ["critical", "high", "medium", "low"],
-                default=["critical", "high", "medium", "low"]
+        with c1:
+            st.subheader("📡 Risk vs. Opportunity Radar")
+            
+            categories = ['Logistics', 'Compliance', 'Market', 'Social', 'Weather']
+            risk_vals = [
+                snapshot.get('logistics_friction', 0),
+                snapshot.get('compliance_volatility', 0),
+                snapshot.get('market_instability', 0),
+                0.4, 0.2 
+            ]
+            
+            fig = go.Figure()
+            
+            # Risk Layer
+            fig.add_trace(go.Scatterpolar(
+                r=risk_vals, theta=categories, fill='toself', name='Operational Risk',
+                line_color='#ff4444'
+            ))
+            
+            # Opportunity Layer
+            fig.add_trace(go.Scatterpolar(
+                r=[opp_val] * 5, theta=categories, name='Opportunity Threshold',
+                line_color='#00CC96', opacity=0.7, line=dict(dash='dot')
+            ))
+            
+            fig.update_layout(
+                polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+                showlegend=True,
+                height=350,
+                margin=dict(l=40, r=40, t=20, b=20),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                font=dict(color="white")
             )
-        
-        with col2:
-            domain_filter = st.multiselect(
-                "Domain",
-                list(set(domains)),
-                default=list(set(domains))
-            )
-        
-        # Display events
-        st.subheader("Event Details")
-        
-        # Filter feed
-        filtered_feed = [
-            e for e in feed
-            if e.get("severity", "medium") in severity_filter
-            and e.get("target_agent", "unknown") in domain_filter
-        ]
-        
-        if not filtered_feed:
-            st.info("No events match the selected filters.")
-        else:
-            for i, event in enumerate(filtered_feed[:20], 1):  # Show top 20
-                domain = event.get("target_agent", "unknown").upper()
-                confidence = event.get("confidence_score", 0.0)
-                severity = event.get("severity", "medium")
-                summary = event.get("content_summary", "No summary")
-                timestamp = event.get("timestamp", "")
-                
-                # Severity color
-                severity_class = f"severity-{severity}"
-                
-                with st.expander(f"#{i} [{domain}] {summary[:80]}...", expanded=(i <= 3)):
-                    st.markdown(f"""
-                    **Domain:** {domain}  
-                    **Confidence:** {confidence:.3f}  
-                    **Severity:** <span class="{severity_class}">{severity.upper()}</span>  
-                    **Timestamp:** {timestamp}
+            st.plotly_chart(fig, use_container_width=True)
+
+        # -------------------------------------------------------------------------
+        # 3. INTELLIGENCE FEED
+        # -------------------------------------------------------------------------
+        with c2:
+            st.subheader("📰 Intelligence Feed")
+            
+            tab_all, tab_risk, tab_opp = st.tabs(["All Events", "Risks ⚠️", "Opportunities 🚀"])
+            
+            def render_feed(filter_type=None):
+                if not feed:
+                    st.info("No events detected.")
+                    return
+
+                count = 0
+                for event in feed[:15]: 
+                    imp = event.get("impact_type", "risk")
+                    if filter_type and imp != filter_type: continue
                     
-                    ---
+                    border_color = "#ff4444" if imp == "risk" else "#00CC96"
+                    icon = "⚠️" if imp == "risk" else "🚀"
                     
-                    **Summary:**  
-                    {summary}
-                    """, unsafe_allow_html=True)
+                    summary = event.get("content_summary", "")
+                    domain = event.get("target_agent", "unknown").upper()
+                    score = event.get("confidence_score", 0.0)
+                    
+                    st.markdown(
+                        f"""
+                        <div style="border-left: 4px solid {border_color}; padding: 10px; margin-bottom: 10px; background-color: #262730; border-radius: 4px;">
+                            <div style="font-size: 0.8em; color: #aaa; display: flex; justify-content: space-between;">
+                                <span>{domain}</span>
+                                <span>SCORE: {score:.2f}</span>
+                            </div>
+                            <div style="margin-top: 4px; font-weight: 500;">
+                                {icon} {summary}
+                            </div>
+                        </div>
+                        """, 
+                        unsafe_allow_html=True
+                    )
+                    count += 1
+                
+                if count == 0:
+                    st.caption("No events in this category.")
+
+            with tab_all: render_feed()
+            with tab_risk: render_feed("risk")
+            with tab_opp: render_feed("opportunity")
+            
+        st.divider()
+        st.caption(f"Last Updated: {datetime.utcnow().strftime('%H:%M:%S UTC')} | Run Count: {st.session_state.execution_count}")
+
+# ============================================
+# MAIN EXECUTION LOGIC
+# ============================================
+
+# We use a placeholder that we can overwrite dynamically
+dashboard_placeholder = st.empty()
+
+if st.session_state.monitoring_active:
     
-    st.divider()
+    # ---------------------------------------------------------
+    # PHASE 1: INITIAL LOAD (Runs only if we have NO data)
+    # ---------------------------------------------------------
+    if st.session_state.latest_result is None:
+        with dashboard_placeholder.container():
+            st.markdown("<br><br><br>", unsafe_allow_html=True)
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                st.markdown('<div class="loading-text">INITIALIZING NEURAL AGENTS...</div>', unsafe_allow_html=True)
+                st.markdown('<div style="text-align:center; color:#666;">Connecting to ModelX Graph Network</div>', unsafe_allow_html=True)
+                progress_bar = st.progress(0)
+                
+                # Visual effect for initialization
+                steps = ["Loading Social Graph...", "Connecting to Market Data...", "Calibrating Risk Radar...", "Starting Fan-Out Sequence..."]
+                for i, step in enumerate(steps):
+                    time.sleep(0.3)
+                    progress_bar.progress((i + 1) * 25)
+
+            # --- PERFORM FIRST FETCH ---
+            try:
+                current_state = CombinedAgentState(max_runs=1, run_count=0)
+                result = graph.invoke(current_state)
+                
+                # Save to session state
+                st.session_state.latest_result = result
+                st.session_state.last_hash = calculate_hash(result)
+                st.session_state.execution_count = 1
+                
+            except Exception as e:
+                st.error(f"Initialization Error: {e}")
+                st.session_state.monitoring_active = False
+                st.stop()
+
+    # ---------------------------------------------------------
+    # PHASE 2: CONTINUOUS MONITORING LOOP
+    # ---------------------------------------------------------
+    # By this point, st.session_state.latest_result is GUARANTEED to have data.
     
-    # ========== EXECUTION METADATA ==========
-    st.header("🔄 Execution Metadata")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        run_count = result.get("run_count", 0)
-        st.metric("Iterations", run_count)
-    
-    with col2:
-        last_run = result.get("last_run_ts")
-        if last_run:
-            st.metric("Last Run", last_run.strftime("%H:%M:%S"))
-        else:
-            st.metric("Last Run", "N/A")
-    
-    with col3:
-        route = result.get("route")
-        routing_decision = "LOOP" if route == "GraphInitiator" else "END"
-        st.metric("Routing Decision", routing_decision)
-    
-    # Timeline
-    if len(st.session_state.execution_history) > 1:
-        st.subheader("Execution History")
+    while st.session_state.monitoring_active:
         
-        history_data = []
-        for h in st.session_state.execution_history[-10:]:  # Last 10
-            ts = h["timestamp"]
-            count = h["result"].get("run_count", 0)
-            events = len(h["result"].get("final_ranked_feed", []))
-            history_data.append({"Timestamp": ts, "Iterations": count, "Events": events})
+        # 1. RENDER CURRENT DATA
+        # We render whatever is in the state immediately. 
+        # This replaces the loading screen or the previous frame.
+        render_dashboard(dashboard_placeholder, st.session_state.latest_result)
         
-        st.dataframe(history_data, use_container_width=True)
+        # 2. WAIT (The "Background" part)
+        # The UI is now visible to the user while we sleep.
+        time.sleep(refresh_rate)
+        
+        # 3. FETCH NEW DATA
+        try:
+            current_state = CombinedAgentState(max_runs=1, run_count=st.session_state.execution_count)
+            # Run the graph silently in background
+            new_result = graph.invoke(current_state)
+            
+            # 4. CHECK FOR DIFFERENCES
+            new_hash = calculate_hash(new_result)
+            
+            if new_hash != st.session_state.last_hash:
+                # DATA CHANGED: Update state
+                st.session_state.last_hash = new_hash
+                st.session_state.latest_result = new_result
+                st.session_state.execution_count += 1
+                
+                # Optional: Pop a toast
+                st.toast(f"New Intel Detected ({len(new_result.get('final_ranked_feed', []))} events)", icon="⚡")
+                
+                # The loop continues... 
+                # The NEXT iteration (Step 1) will render this new data.
+            else:
+                # NO CHANGE:
+                # We do nothing. The loop continues. 
+                # Step 1 will simply re-render the existing stable data.
+                pass
+                
+        except Exception as e:
+            st.error(f"Monitoring Error: {e}")
+            time.sleep(5) # Wait before retrying on error
 
 else:
-    st.info("👆 Click 'Run ModelX Analysis' to start monitoring Sri Lanka's operational environment.")
-    
-    # Show sample architecture diagram
-    st.subheader("How ModelX Works")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("""
-        ### Fan-Out Phase
-        1. **GraphInitiator** starts the cycle
-        2. Dispatches to 6 domain agents:
-           - Social Agent
-           - Political Agent
-           - Economic Agent
-           - Meteorological Agent
-           - Intelligence Agent
-           - Data Retrieval Agent
-        3. All agents execute **in parallel**
-        """)
-    
-    with col2:
-        st.markdown("""
-        ### Fan-In Phase
-        1. **FeedAggregator** collects insights
-        2. Deduplicates and ranks by priority
-        3. **DataRefresher** updates dashboard
-        4. **Router** decides:
-           - Loop if high confidence event
-           - End if conditions met
-        """)
-
-# ============================================
-# JSON EXPORT MODAL
-# ============================================
-
-if st.session_state.get("show_json", False) and st.session_state.current_result:
-    with st.expander("📄 JSON Export", expanded=True):
-        export_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "risk_dashboard": st.session_state.current_result.get("risk_dashboard_snapshot", {}),
-            "events": st.session_state.current_result.get("final_ranked_feed", []),
-            "metadata": {
-                "run_count": st.session_state.current_result.get("run_count", 0),
-                "last_run": str(st.session_state.current_result.get("last_run_ts", ""))
-            }
-        }
-        
-        st.json(export_data)
-        
-        st.download_button(
-            label="⬇️ Download JSON",
-            data=json.dumps(export_data, indent=2, default=str),
-            file_name=f"modelx_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json",
-            mime="application/json"
-        )
-    
-    st.session_state.show_json = False
-
-# ============================================
-# FOOTER
-# ============================================
-
-st.divider()
-st.markdown("""
-<div style="text-align: center; color: #666; font-size: 0.9rem;">
-    ModelX Platform | Team Adagard | Open Innovation Track 2025<br>
-    Built with LangGraph, Streamlit, and ❤️ for Sri Lanka
-</div>
-""", unsafe_allow_html=True)
+    # ---------------------------------------------------------
+    # IDLE STATE
+    # ---------------------------------------------------------
+    with dashboard_placeholder.container():
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 4, 1])
+        with col2:
+            st.info("System Standby. Click '▶ START' in the sidebar to begin autonomous monitoring.")
+            
+            if st.session_state.latest_result:
+                st.markdown("### Last Session Snapshot:")
+                # We use a temporary container here just for the snapshot
+                with st.container():
+                     render_dashboard(st.empty(), st.session_state.latest_result)

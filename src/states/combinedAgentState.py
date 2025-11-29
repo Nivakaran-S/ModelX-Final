@@ -1,6 +1,7 @@
 """
 src/states/combinedAgentState.py
 FIXED: Proper state management for parent graph with correct typing and Reducer
+UPDATED: Added Opportunity Metrics for Hackathon Requirements
 """
 from __future__ import annotations
 import operator 
@@ -40,6 +41,8 @@ class RiskMetrics(BaseModel):
     logistics_friction: float = Field(default=0.0, description="Route risk score from mobility data")
     compliance_volatility: float = Field(default=0.0, description="Regulatory risk from political data")
     market_instability: float = Field(default=0.0, description="Market volatility from economic data")
+    # NEW: Added for 'Risk & Opportunity Insights' requirement
+    opportunity_index: float = Field(default=0.0, description="Positive growth signal score")
 
 
 class CombinedAgentState(BaseModel):
@@ -68,8 +71,17 @@ class CombinedAgentState(BaseModel):
     
     # Dashboard snapshot for Operational Risk Radar
     risk_dashboard_snapshot: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Real-time risk metrics dashboard"
+        default_factory=lambda: {
+            "logistics_friction": 0.0,
+            "compliance_volatility": 0.0,
+            "market_instability": 0.0,
+            "opportunity_index": 0.0, # <--- NEW METRIC
+            "avg_confidence": 0.0,
+            "high_priority_count": 0,
+            "total_events": 0,
+            "last_updated": ""
+        },
+        description="Real-time risk and opportunity metrics dashboard"
     )
     
     # ===== EXECUTION CONTROL =====

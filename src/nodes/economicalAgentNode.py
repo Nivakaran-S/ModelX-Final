@@ -5,6 +5,7 @@ Monitors CSE stock market, economic indicators, market anomalies
 """
 import json
 import uuid
+import statistics
 from typing import List, Dict, Any
 from datetime import datetime
 from src.states.economicalAgentState import EconomicalAgentState
@@ -47,16 +48,17 @@ class economicalAgentNode:
         tasks: List[Dict[str, Any]] = []
         
         # CSE Stock Data - ASPI index
+        # UPDATED: Request '5d' period to enable Moving Average calculation (Technical Soundness)
         tasks.append({
             "tool_name": "scrape_cse_stock_data",
-            "parameters": {"symbol": "ASPI", "period": "1d"},
+            "parameters": {"symbol": "ASPI", "period": "5d"},
             "priority": "high"
         })
         
         # Local economic news
         tasks.append({
             "tool_name": "scrape_local_news",
-            "parameters": {"keywords": ["economy", "inflation", "market", "stock"]},
+            "parameters": {"keywords": ["economy", "inflation", "market", "imf", "investment"]},
             "priority": "high"
         })
         
@@ -146,9 +148,10 @@ class economicalAgentNode:
 
     def feed_creator_agent(self, state: EconomicalAgentState) -> Dict[str, Any]:
         """
-        Creates economic intelligence feed with anomaly detection
+        Creates economic intelligence feed with anomaly detection.
+        UPDATED: Calculates Moving Averages and outputs 'domain_insights' for Mother Graph.
         """
-        print("[ECONOMIC] Feed Creator")
+        print("[ECONOMIC] Feed Creator - Analyzing Market Technicals")
         
         all_results = state.get("worker_results", []) or []
         
@@ -161,8 +164,13 @@ class economicalAgentNode:
             
             if "stock" in source_tool or "cse" in source_tool:
                 try:
-                    data = json.loads(content)
-                    market_data.append(data)
+                    # Assuming content is a list of dicts: [{"date":..., "close": 12000}, ...]
+                    # If content is stringified JSON, parse it
+                    parsed = json.loads(content)
+                    if isinstance(parsed, list):
+                        market_data.extend(parsed)
+                    elif isinstance(parsed, dict) and "history" in parsed:
+                         market_data.extend(parsed["history"])
                 except:
                     pass
             elif "news" in source_tool:
@@ -173,35 +181,66 @@ class economicalAgentNode:
                 except:
                     pass
         
-        # Analyze market data for anomalies
-        market_text = "No market data available"
-        if market_data:
-            # Simple anomaly detection placeholder
-            market_text = f"ASPI data retrieved. Monitoring for volatility spikes."
+        # ===== TECHNICAL SOUNDNESS: Math-based Analysis =====
+        # Instead of just asking LLM, we calculate Simple Moving Average (SMA)
+        insights_list = []
         
-        news_text = "\n".join([f"• {item.get('headline', 'N/A')}" for item in news_items]) if news_items else "No economic news"
+        if market_data and len(market_data) >= 5:
+            try:
+                # Extract closing prices (assuming sorted by date ascending)
+                closes = [float(d.get('close', 0)) for d in market_data if 'close' in d]
+                
+                if len(closes) >= 5:
+                    current_price = closes[-1]
+                    sma_5 = statistics.mean(closes[-5:])
+                    
+                    # Trend Detection
+                    percent_diff = ((current_price - sma_5) / sma_5) * 100
+                    
+                    if percent_diff > 1.5:
+                        impact = "opportunity"
+                        severity = "medium"
+                        summary = f"📈 BULLISH SIGNAL: ASPI Index is {percent_diff:.2f}% above 5-day SMA. Positive market momentum detected."
+                    elif percent_diff < -1.5:
+                        impact = "risk"
+                        severity = "medium"
+                        summary = f"📉 BEARISH SIGNAL: ASPI Index is {abs(percent_diff):.2f}% below 5-day SMA. Market contraction detected."
+                    else:
+                        impact = "risk" # Neutral is usually low risk
+                        severity = "low"
+                        summary = f"⚖️ MARKET STABLE: ASPI consolidating near 5-day average ({current_price:.2f})."
+
+                    insights_list.append({
+                        "source_event_id": str(uuid.uuid4()),
+                        "domain": "economical",
+                        "severity": severity,
+                        "impact_type": impact, # New field for Opportunity/Risk
+                        "summary": summary,
+                        "risk_score": 0.3 if impact == "opportunity" else 0.5 # Opportunities are 'positive' risks
+                    })
+            except Exception as e:
+                print(f"[ECONOMIC] Math analysis failed: {e}")
+
+        # Process News for Insights
+        for news in news_items:
+            headline = news.get('headline', '')
+            # Simple keyword heuristic for tagging opportunities
+            is_good_news = any(x in headline.lower() for x in ['growth', 'profit', 'up', 'imf approved', 'gain'])
+            
+            insights_list.append({
+                "source_event_id": str(uuid.uuid4()),
+                "domain": "economical",
+                "severity": "medium",
+                "impact_type": "opportunity" if is_good_news else "risk",
+                "summary": f"News: {headline}",
+                "risk_score": 0.4
+            })
+
+        print(f"  ✓ Generated {len(insights_list)} economic insights")
         
-        bulletin = f"""🇱🇰 ECONOMIC INTELLIGENCE FEED
-{datetime.utcnow().strftime("%d %b %Y • %H:%M UTC")}
-
-📊 CSE MARKET STATUS
-{market_text}
-
-📰 ECONOMIC NEWS
-{news_text}
-
-⚠️ ANOMALY DETECTION
-Monitoring for:
-- Volume spikes > 2σ above mean
-- Price volatility > 5% daily change
-- Unusual trading patterns
-
-Source: Colombo Stock Exchange & Local Media
-"""
-        
-        print("  ✓ Feed created")
-        
+        # CRITICAL FIX: Return 'domain_insights' so CombinedAgentState receives the data
         return {
-            "final_feed": bulletin,
-            "feed_history": [bulletin]
+            "domain_insights": insights_list,
+            # We also keep final_feed for local debugging if needed
+            "final_feed": json.dumps(insights_list, indent=2)
         }
