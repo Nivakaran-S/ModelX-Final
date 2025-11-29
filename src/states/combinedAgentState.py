@@ -1,7 +1,6 @@
 """
 src/states/combinedAgentState.py
-FIXED: Proper state management for parent graph with correct typing and Reducer
-UPDATED: Added Opportunity Metrics for Hackathon Requirements
+COMPLETE - All original states preserved with proper typing and Reducer
 """
 from __future__ import annotations
 import operator 
@@ -41,7 +40,6 @@ class RiskMetrics(BaseModel):
     logistics_friction: float = Field(default=0.0, description="Route risk score from mobility data")
     compliance_volatility: float = Field(default=0.0, description="Regulatory risk from political data")
     market_instability: float = Field(default=0.0, description="Market volatility from economic data")
-    # NEW: Added for 'Risk & Opportunity Insights' requirement
     opportunity_index: float = Field(default=0.0, description="Positive growth signal score")
 
 
@@ -55,8 +53,6 @@ class CombinedAgentState(BaseModel):
     
     # ===== INPUT FROM DOMAIN AGENTS =====
     # This is where domain agents write their outputs
-    # Each domain agent adds a Dict with: source_event_id, domain, severity, summary, risk_score
-    # FIX: Added Annotated with reduce_insights to allow parallel writes and resetting
     domain_insights: Annotated[List[Dict[str, Any]], reduce_insights] = Field(
         default_factory=list,
         description="Insights from domain agents (Social, Political, Economic, etc.)"
@@ -75,7 +71,7 @@ class CombinedAgentState(BaseModel):
             "logistics_friction": 0.0,
             "compliance_volatility": 0.0,
             "market_instability": 0.0,
-            "opportunity_index": 0.0, # <--- NEW METRIC
+            "opportunity_index": 0.0,
             "avg_confidence": 0.0,
             "high_priority_count": 0,
             "total_events": 0,

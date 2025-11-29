@@ -14,7 +14,7 @@ const MapView = () => {
   // Count alerts per district (simplified - matches district names in event summaries)
   const districtAlertCounts: Record<string, number> = {};
   
-  events.forEach(event => {
+  (events ?? []).forEach(event => {
     const summary = event.summary.toLowerCase();
     // Check if district name is mentioned in the event
     ['colombo', 'gampaha', 'kandy', 'jaffna', 'galle', 'matara', 'hambantota', 
@@ -61,12 +61,16 @@ const MapView = () => {
         
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <SriLankaMap 
-              selectedDistrict={selectedDistrict}
-              onDistrictSelect={setSelectedDistrict}
-              alertCounts={districtAlertCounts}
-            />
+            <div className="h-[550px] w-full"> 
+              <SriLankaMap 
+                selectedDistrict={selectedDistrict}
+                onDistrictSelect={setSelectedDistrict}
+                alertCounts={districtAlertCounts}
+                className="w-full h-full"
+              />
+            </div>
           </div>
+
           
           <div className="lg:col-span-1">
             <DistrictInfoPanel district={selectedDistrict} />
