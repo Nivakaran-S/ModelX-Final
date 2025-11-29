@@ -1,209 +1,180 @@
 """
-main.py
-Main entry point for ModelX Platform
-Run this to test the complete system
+backend/api/main.py
+FastAPI server to expose ModelX graph state to frontend
 """
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Dict, Any, List
+import asyncio
 import json
 from datetime import datetime
+import sys
+import os
+
+# Add src to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from src.graphs.ModelXGraph import graph
 from src.states.combinedAgentState import CombinedAgentState
 
+app = FastAPI(title="ModelX Intelligence Platform API")
 
-def run_modelx_platform():
-    """
-    Executes the complete ModelX platform and displays results.
-    """
-    print("\n" + "=" * 80)
-    print("🇱🇰 MODELX - SRI LANKA NATIONAL SITUATIONAL AWARENESS PLATFORM")
-    print("=" * 80)
-    print(f"Execution Time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
-    print("=" * 80)
+# CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Global state storage
+current_state: Dict[str, Any] = {
+    "final_ranked_feed": [],
+    "risk_dashboard_snapshot": {
+        "logistics_friction": 0.0,
+        "compliance_volatility": 0.0,
+        "market_instability": 0.0,
+        "opportunity_index": 0.0,
+        "avg_confidence": 0.0,
+        "high_priority_count": 0,
+        "total_events": 0,
+        "last_updated": datetime.utcnow().isoformat()
+    },
+    "run_count": 0,
+    "status": "initializing"
+}
+
+active_connections: List[WebSocket] = []
+
+# Background task to run the graph
+async def run_graph_loop():
+    """Continuously runs the ModelX graph and updates state"""
+    global current_state
     
-    # Initialize state
-    initial_state = CombinedAgentState()
+    print("[API] Starting ModelX graph loop...")
     
-    print("\n[SYSTEM] Initializing ModelX platform...")
-    print("[SYSTEM] Starting Fan-Out/Fan-In execution...")
-    print()
+    # Initial state
+    initial_state = CombinedAgentState(
+        domain_insights=[],
+        final_ranked_feed=[],
+        run_count=0,
+        max_runs=999,  # Continuous mode
+        route=None
+    )
     
     try:
-        # Execute the graph
-        result = graph.invoke(initial_state)
-        
-        print("\n" + "=" * 80)
-        print("✓ EXECUTION COMPLETED SUCCESSFULLY")
-        print("=" * 80)
-        
-        # Display Results
-        display_results(result)
-        
-        return result
-        
+        # Stream graph execution
+        async for event in graph.astream(initial_state):
+            # Extract state updates
+            for node_name, node_output in event.items():
+                print(f"[API] Node: {node_name}")
+                
+                # Update global state with latest outputs
+                if hasattr(node_output, 'final_ranked_feed'):
+                    current_state['final_ranked_feed'] = [
+                        {
+                            "event_id": e.get("event_id"),
+                            "domain": e.get("target_agent"),
+                            "severity": e.get("severity"),
+                            "impact_type": e.get("impact_type", "risk"),
+                            "summary": e.get("content_summary"),
+                            "confidence": e.get("confidence_score"),
+                            "timestamp": e.get("timestamp")
+                        }
+                        for e in node_output.final_ranked_feed
+                    ]
+                
+                if hasattr(node_output, 'risk_dashboard_snapshot'):
+                    current_state['risk_dashboard_snapshot'] = node_output.risk_dashboard_snapshot
+                
+                if hasattr(node_output, 'run_count'):
+                    current_state['run_count'] = node_output.run_count
+                
+                current_state['status'] = 'operational'
+                current_state['last_update'] = datetime.utcnow().isoformat()
+                
+                # Broadcast to all connected WebSocket clients
+                await broadcast_state()
+                
+                # Small delay for UI responsiveness
+                await asyncio.sleep(0.5)
+                
     except Exception as e:
-        print(f"\n[ERROR] Execution failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
+        print(f"[API] Graph error: {e}")
+        current_state['status'] = 'error'
+        current_state['error'] = str(e)
 
-
-def display_results(result):
-    """
-    Formats and displays ModelX results.
-    """
-    
-    # 1. Risk Dashboard
-    print("\n" + "=" * 80)
-    print("📊 OPERATIONAL RISK RADAR")
-    print("=" * 80)
-    
-    snapshot = result.get("risk_dashboard_snapshot", {})
-    
-    print(f"""
-╔══════════════════════════════════════╗
-║  LOGISTICS FRICTION:      {snapshot.get('logistics_friction', 0.0):.3f}    ║
-║  COMPLIANCE VOLATILITY:   {snapshot.get('compliance_volatility', 0.0):.3f}    ║
-║  MARKET INSTABILITY:      {snapshot.get('market_instability', 0.0):.3f}    ║
-╠══════════════════════════════════════╣
-║  AVG CONFIDENCE:          {snapshot.get('avg_confidence', 0.0):.3f}    ║
-║  HIGH PRIORITY EVENTS:    {snapshot.get('high_priority_count', 0)}        ║
-║  TOTAL EVENTS:            {snapshot.get('total_events', 0)}        ║
-╚══════════════════════════════════════╝
-""")
-    
-    # 2. National Activity Feed
-    print("=" * 80)
-    print("📰 NATIONAL ACTIVITY FEED")
-    print("=" * 80)
-    
-    feed = result.get("final_ranked_feed", [])
-    
-    if not feed:
-        print("\n⚠️  No events detected in current scan")
-    else:
-        print(f"\nShowing top {min(10, len(feed))} events (sorted by priority):\n")
-        
-        for i, event in enumerate(feed[:10], 1):
-            domain = event.get("target_agent", "unknown").upper()
-            confidence = event.get("confidence_score", 0.0)
-            severity = event.get("severity", "unknown").upper()
-            summary = event.get("content_summary", "No summary")[:200]
-            
-            print(f"{i}. [{domain}] Confidence: {confidence:.3f} | Severity: {severity}")
-            print(f"   {summary}...")
-            print()
-    
-    # 3. Execution Metadata
-    print("=" * 80)
-    print("🔄 EXECUTION METADATA")
-    print("=" * 80)
-    
-    run_count = result.get("run_count", 0)
-    last_run = result.get("last_run_ts")
-    
-    print(f"""
-Total Iterations:     {run_count}
-Last Execution:       {last_run}
-Routing Decision:     {'LOOP' if result.get('route') == 'GraphInitiator' else 'END'}
-""")
-    
-    # 4. Export Results
-    print("=" * 80)
-    print("💾 EXPORTING RESULTS")
-    print("=" * 80)
-    
-    export_results_to_json(result)
-
-
-def export_results_to_json(result):
-    """
-    Exports results to JSON file for further analysis.
-    """
-    try:
-        # Convert datetime objects to strings
-        export_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "risk_dashboard": result.get("risk_dashboard_snapshot", {}),
-            "events": result.get("final_ranked_feed", []),
-            "metadata": {
-                "run_count": result.get("run_count", 0),
-                "last_run": str(result.get("last_run_ts", ""))
-            }
-        }
-        
-        filename = f"modelx_output_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-        
-        with open(filename, 'w') as f:
-            json.dump(export_data, f, indent=2)
-        
-        print(f"✓ Results exported to: {filename}")
-        
-    except Exception as e:
-        print(f"✗ Export failed: {e}")
-
-
-def run_single_agent_test(agent_name: str):
-    """
-    Test individual domain agents.
-    
-    Args:
-        agent_name: One of ['social', 'political', 'economical', 
-                           'meteorological', 'intelligence', 'data_retrieval']
-    """
-    print(f"\n[TEST] Running {agent_name.upper()} Agent Test\n")
-    
-    if agent_name == "social":
-        from src.graphs.socialAgentGraph import graph as agent_graph
-        from src.states.socialAgentState import SocialAgentState
-        state = SocialAgentState()
-    elif agent_name == "political":
-        from src.graphs.politicalAgentGraph import graph as agent_graph
-        from src.states.politicalAgentState import PoliticalAgentState
-        state = PoliticalAgentState()
-    elif agent_name == "economical":
-        from src.graphs.economicalAgentGraph import graph as agent_graph
-        from src.states.economicalAgentState import EconomicalAgentState
-        state = EconomicalAgentState()
-    elif agent_name == "meteorological":
-        from src.graphs.meteorologicalAgentGraph import graph as agent_graph
-        from src.states.meteorologicalAgentState import MeteorologicalAgentState
-        state = MeteorologicalAgentState()
-    elif agent_name == "intelligence":
-        from src.graphs.intelligenceAgentGraph import graph as agent_graph
-        from src.states.intelligenceAgentState import IntelligenceAgentState
-        state = IntelligenceAgentState()
-    elif agent_name == "data_retrieval":
-        from src.graphs.dataRetrievalAgentGraph import graph as agent_graph
-        from src.states.dataRetrievalAgentState import DataRetrievalAgentState
-        state = DataRetrievalAgentState()
-    else:
-        print(f"Unknown agent: {agent_name}")
+async def broadcast_state():
+    """Send current state to all WebSocket clients"""
+    if not active_connections:
         return
     
-    try:
-        result = agent_graph.invoke(state)
-        
-        print(f"\n✓ {agent_name.upper()} Agent Test Completed")
-        print("\nOutput:")
-        print(f"  Domain Insights: {len(result.get('domain_insights', []))} items")
-        
-        if 'final_feed' in result:
-            print(f"\n{result['final_feed']}")
-        
-        return result
-        
-    except Exception as e:
-        print(f"\n✗ Test Failed: {e}")
-        import traceback
-        traceback.print_exc()
+    message = json.dumps(current_state, default=str)
+    
+    # Remove disconnected clients
+    dead_connections = []
+    for connection in active_connections:
+        try:
+            await connection.send_text(message)
+        except:
+            dead_connections.append(connection)
+    
+    for conn in dead_connections:
+        active_connections.remove(conn)
 
+@app.on_event("startup")
+async def startup_event():
+    """Start the graph loop when API starts"""
+    asyncio.create_task(run_graph_loop())
+
+@app.get("/")
+def read_root():
+    return {
+        "service": "ModelX Intelligence Platform",
+        "status": current_state.get("status"),
+        "version": "1.0.0"
+    }
+
+@app.get("/api/status")
+def get_status():
+    """Get current system status"""
+    return {
+        "status": current_state.get("status"),
+        "run_count": current_state.get("run_count"),
+        "last_update": current_state.get("last_update"),
+        "active_connections": len(active_connections)
+    }
+
+@app.get("/api/dashboard")
+def get_dashboard():
+    """Get risk dashboard snapshot"""
+    return current_state.get("risk_dashboard_snapshot", {})
+
+@app.get("/api/feed")
+def get_feed():
+    """Get latest ranked intelligence feed"""
+    return {
+        "events": current_state.get("final_ranked_feed", []),
+        "total": len(current_state.get("final_ranked_feed", []))
+    }
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket for real-time updates"""
+    await websocket.accept()
+    active_connections.append(websocket)
+    
+    # Send initial state
+    await websocket.send_text(json.dumps(current_state, default=str))
+    
+    try:
+        while True:
+            # Keep connection alive
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        active_connections.remove(websocket)
 
 if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) > 1:
-        # Test individual agent
-        agent_name = sys.argv[1].lower()
-        run_single_agent_test(agent_name)
-    else:
-        # Run full system
-        run_modelx_platform()
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

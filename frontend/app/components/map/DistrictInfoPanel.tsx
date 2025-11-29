@@ -3,12 +3,15 @@ import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
 import { Cloud, Newspaper, TrendingUp, Users, AlertTriangle, MapPin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useModelXData } from "../../hooks/use-modelx-data";
 
 interface DistrictInfoPanelProps {
   district: string | null;
 }
 
 const DistrictInfoPanel = ({ district }: DistrictInfoPanelProps) => {
+  const { events } = useModelXData();
+
   if (!district) {
     return (
       <Card className="p-6 bg-card border-border h-full flex items-center justify-center">
@@ -20,24 +23,30 @@ const DistrictInfoPanel = ({ district }: DistrictInfoPanelProps) => {
     );
   }
 
-  // Mock data - replace with actual API data
-  const districtData = {
-    population: "2.3M",
-    weather: "Partly Cloudy, 28°C",
-    alerts: [
-      { type: "traffic", title: "Heavy Traffic on Main St", severity: "medium" },
-      { type: "weather", title: "Rain Expected Tonight", severity: "low" },
-    ],
-    news: [
-      { title: "New Business Park Opens", source: "Daily News", time: "2h ago" },
-      { title: "Local Election Results", source: "The Island", time: "5h ago" },
-      { title: "Infrastructure Development", source: "News First", time: "1d ago" },
-    ],
-    economic: {
-      businesses: "1,234",
-      growth: "+5.2%",
-    },
+  // Filter events that might relate to this district
+  const districtEvents = events.filter(e => 
+    e.summary.toLowerCase().includes(district.toLowerCase())
+  );
+
+  // Categorize events
+  const alerts = districtEvents.filter(e => e.impact_type === 'risk');
+  const news = districtEvents.filter(e => e.domain === 'social' || e.domain === 'intelligence');
+  const weatherEvents = events.filter(e => e.domain === 'weather' || e.domain === 'meteorological');
+  
+  // Calculate risk level
+  const criticalAlerts = alerts.filter(e => e.severity === 'critical' || e.severity === 'high');
+  const riskLevel = criticalAlerts.length > 0 ? 'high' : alerts.length > 0 ? 'medium' : 'low';
+
+  // District population data (static for demo)
+  const districtData: Record<string, any> = {
+    "Colombo": { population: "2.3M", businesses: "15,234", growth: "+5.2%" },
+    "Gampaha": { population: "2.4M", businesses: "8,456", growth: "+4.1%" },
+    "Kandy": { population: "1.4M", businesses: "5,678", growth: "+3.8%" },
+    "Jaffna": { population: "0.6M", businesses: "2,345", growth: "+6.2%" },
+    "Galle": { population: "1.1M", businesses: "4,567", growth: "+4.5%" },
   };
+
+  const info = districtData[district] || { population: "N/A", businesses: "N/A", growth: "N/A" };
 
   return (
     <AnimatePresence mode="wait">
@@ -48,48 +57,79 @@ const DistrictInfoPanel = ({ district }: DistrictInfoPanelProps) => {
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="p-6 bg-card border-border space-y-4 animate-slide-in-right">
+        <Card className="p-6 bg-card border-border space-y-4">
           {/* Header */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-primary">{district}</h3>
-              <Badge className="font-mono border border-border">DISTRICT</Badge>
+              <Badge className={`font-mono border ${
+                riskLevel === 'high' ? 'border-destructive text-destructive' :
+                riskLevel === 'medium' ? 'border-warning text-warning' :
+                'border-success text-success'
+              }`}>
+                {riskLevel.toUpperCase()} RISK
+              </Badge>
             </div>
             <p className="text-xs text-muted-foreground font-mono">
-              Population: {districtData.population}
+              Population: {info.population}
             </p>
           </div>
 
           <Separator className="bg-border" />
 
-          {/* Weather */}
+          {/* Live Weather */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Cloud className="w-4 h-4 text-info" />
-              <h4 className="font-semibold text-sm">WEATHER</h4>
+              <h4 className="font-semibold text-sm">WEATHER STATUS</h4>
             </div>
-            <p className="text-sm font-mono">{districtData.weather}</p>
+            {weatherEvents.length > 0 ? (
+              <div className="space-y-1">
+                {weatherEvents.slice(0, 2).map((event, idx) => (
+                  <div key={idx} className="text-sm bg-muted/30 rounded p-2">
+                    <p className="font-semibold">{event.summary.substring(0, 60)}...</p>
+                    <Badge className="text-xs mt-1">{event.severity}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No weather alerts</p>
+            )}
           </div>
 
           <Separator className="bg-border" />
 
-          {/* Alerts */}
+          {/* Active Alerts */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="w-4 h-4 text-warning" />
               <h4 className="font-semibold text-sm">ACTIVE ALERTS</h4>
+              <Badge className="ml-auto text-xs">{alerts.length}</Badge>
             </div>
-            <div className="space-y-2">
-              {districtData.alerts.map((alert, idx) => (
-                <div key={idx} className="bg-muted/30 rounded p-2">
-                  <p className="text-xs font-semibold">{alert.title}</p>
-                  <Badge 
-                    className={`text-xs mt-1 ${alert.severity === "high" ? "bg-destructive text-destructive-foreground" : "bg-secondary text-secondary-foreground"}`}
-                  >
-                    {alert.severity.toUpperCase()}
-                  </Badge>
-                </div>
-              ))}
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {alerts.length > 0 ? (
+                alerts.slice(0, 5).map((alert, idx) => (
+                  <div key={idx} className="bg-muted/30 rounded p-2">
+                    <p className="text-xs font-semibold">{alert.summary.substring(0, 80)}...</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge 
+                        className={`text-xs ${
+                          alert.severity === 'high' || alert.severity === 'critical' 
+                            ? "bg-destructive text-destructive-foreground" 
+                            : "bg-secondary text-secondary-foreground"
+                        }`}
+                      >
+                        {alert.severity.toUpperCase()}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(alert.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground">No active alerts</p>
+              )}
             </div>
           </div>
 
@@ -101,16 +141,22 @@ const DistrictInfoPanel = ({ district }: DistrictInfoPanelProps) => {
               <Newspaper className="w-4 h-4 text-primary" />
               <h4 className="font-semibold text-sm">RECENT NEWS</h4>
             </div>
-            <div className="space-y-2">
-              {districtData.news.map((item, idx) => (
-                <div key={idx} className="bg-muted/30 rounded p-2">
-                  <p className="text-xs font-semibold mb-1">{item.title}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{item.source}</span>
-                    <span className="text-xs font-mono text-muted-foreground">{item.time}</span>
+            <div className="space-y-2 max-h-[150px] overflow-y-auto">
+              {news.length > 0 ? (
+                news.slice(0, 3).map((item, idx) => (
+                  <div key={idx} className="bg-muted/30 rounded p-2">
+                    <p className="text-xs font-semibold mb-1">{item.summary.substring(0, 60)}...</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">{item.domain}</span>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {new Date(item.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground">No recent news</p>
+              )}
             </div>
           </div>
 
@@ -125,11 +171,11 @@ const DistrictInfoPanel = ({ district }: DistrictInfoPanelProps) => {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-muted/30 rounded p-2">
                 <p className="text-xs text-muted-foreground">Businesses</p>
-                <p className="text-lg font-bold">{districtData.economic.businesses}</p>
+                <p className="text-lg font-bold">{info.businesses}</p>
               </div>
               <div className="bg-muted/30 rounded p-2">
                 <p className="text-xs text-muted-foreground">Growth</p>
-                <p className="text-lg font-bold text-success">{districtData.economic.growth}</p>
+                <p className="text-lg font-bold text-success">{info.growth}</p>
               </div>
             </div>
           </div>

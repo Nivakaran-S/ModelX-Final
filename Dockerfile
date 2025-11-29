@@ -1,28 +1,21 @@
-# Read the doc: https://huggingface.co/docs/hub/spaces-sdks-docker
-FROM python:3.11
+FROM python:3.11-slim
 
-# Create non-root user
-RUN useradd -m -u 1000 user
-USER user
-
-# Set environment variables
-ENV PATH="/home/user/.local/bin:$PATH"
-ENV PYTHONUNBUFFERED=1
-
-# Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY --chown=user ./requirements.txt requirements.txt
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+# Copy requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY --chown=user . /app
+COPY . .
 
-# Expose port 7860 (required by Hugging Face Spaces)
-EXPOSE 7860
+# Expose port
+EXPOSE 8000
 
-# Run the application
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:7860", "app:app"]
+# Run API server
+CMD ["python", "main.py"]

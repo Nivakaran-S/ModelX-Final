@@ -5,13 +5,17 @@ import DashboardOverview from "../components/dashboard/DashboardOverview";
 import MapView from "../components/map/MapView";
 import IntelligenceFeed from "../components/intelligence/IntelligenceFeed";
 import StockPredictions from "../components/dashboard/StockPredictions";
-import { Activity, Map, Radio, BarChart3 } from "lucide-react";
+import { Activity, Map, Radio, BarChart3, Zap } from "lucide-react";
+import { useModelXData } from "../hooks/use-modelx-data";
+import { Badge } from "../components/ui/badge";
 
 const Index = () => {
+  const { status, run_count, isConnected } = useModelXData();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -20,15 +24,34 @@ const Index = () => {
                   <Activity className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold tracking-tight text-foreground">MODEL<span className="text-primary">X</span></h1>
+                  <h1 className="text-xl font-bold tracking-tight text-foreground">
+                    MODEL<span className="text-primary">X</span>
+                  </h1>
                   <p className="text-xs text-muted-foreground font-mono">SITUATIONAL AWARENESS</p>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="status-active">
-                <span className="text-xs font-mono text-success">OPERATIONAL</span>
-              </div>
+              {/* Connection Status */}
+              {isConnected ? (
+                <Badge className="bg-success/20 text-success flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                  OPERATIONAL
+                </Badge>
+              ) : (
+                <Badge className="bg-warning/20 text-warning flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-warning animate-pulse"></span>
+                  RECONNECTING
+                </Badge>
+              )}
+              
+              {/* System Status */}
+              <Badge className="border border-border flex items-center gap-2">
+                <Zap className="w-3 h-3" />
+                Run #{run_count}
+              </Badge>
+              
+              {/* Time */}
               <div className="text-xs font-mono text-muted-foreground">
                 {new Date().toLocaleString('en-US', { 
                   hour: '2-digit', 
@@ -78,10 +101,7 @@ const Index = () => {
 
           <TabsContent value="analytics" className="animate-fade-in">
             <div className="grid gap-6">
-              <div className="bg-card border border-border rounded p-6">
-                <h2 className="text-lg font-bold mb-4">Market Analytics</h2>
-                <p className="text-muted-foreground">Real-time market intelligence and anomaly detection coming soon...</p>
-              </div>
+              <StockPredictions />
             </div>
           </TabsContent>
         </Tabs>
