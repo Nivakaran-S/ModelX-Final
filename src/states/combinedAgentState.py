@@ -1,65 +1,101 @@
+"""
+src/states/combinedAgentState.py
+FIXED: Proper state management for parent graph with correct typing and Reducer
+"""
 from __future__ import annotations
 import operator 
-from typing_extensions import Optional, Annotated, List, Literal, TypedDict
-from typing import Dict, Any, Union
+from typing import Optional, List, Dict, Any, Annotated, Union
 from datetime import datetime
-from langchain_core.messages import BaseMessage
-from langgraph.graph import MessagesState
-from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
-# ==========================================
-# 1. SHARED & FINAL OUTPUT MODELS
-# ==========================================
+# =============================================================================
+# CUSTOM REDUCER (Fixes InvalidUpdateError & Enables Reset)
+# =============================================================================
+def reduce_insights(existing: List[Dict], new: Union[List[Dict], str]) -> List[Dict]:
+    """
+    Custom reducer for domain_insights.
+    1. If new value is "RESET", clears the list (for continuous loops).
+    2. If new value is a list, appends it to existing list (for parallel agents).
+    """
+    if isinstance(new, str) and new == "RESET":
+        return []
+    
+    # Ensure existing is a list (handles initialization)
+    current = existing if isinstance(existing, list) else []
+    
+    if isinstance(new, list):
+        return current + new
+    
+    return current
+
+# =============================================================================
+# DATA MODELS
+# =============================================================================
 
 class RiskMetrics(BaseModel):
     """
     Quantifiable indicators for the Operational Risk Radar.
+    Maps to the dashboard metrics in your project report.
     """
-    logistics_friction: float = Field(default=0.0, description="Route risk score")
-    compliance_volatility: float = Field(default=0.0, description="Regulatory risk")
-    market_instability: float = Field(default=0.0, description="Volatility index")
+    logistics_friction: float = Field(default=0.0, description="Route risk score from mobility data")
+    compliance_volatility: float = Field(default=0.0, description="Regulatory risk from political data")
+    market_instability: float = Field(default=0.0, description="Market volatility from economic data")
 
-class DomainInsight(BaseModel):
-    """Output from a Domain Agent."""
-    source_event_id: str
-    domain: Literal["political", "mobility", "market", "weather", "social", "intelligence", "data_retrieval"]
-    severity: Literal["low", "medium", "high", "critical"] 
-    summary: str
-    risk_score: float = 0.0
-    actionable_advice: Optional[str] = None
 
-class ClassifiedEvent(BaseModel):
-    """Final output after classification."""
-    event_id: str
-    content_summary: str
-    target_agent: str
-    confidence_score: float
-
-# ==========================================
-# 2. MAIN STATE DEFINITION
-# ==========================================
-
-class CombinedAgentState(MessagesState):
+class CombinedAgentState(BaseModel):
     """
-    Main state for the complete agentic AI system.
-    Inherits from MessagesState to support chat history automatically.
+    Main state for the ModelX combined graph.
+    This is the parent state that receives outputs from all domain agents.
+    
+    CRITICAL: All domain agents must write to 'domain_insights' field.
     """
-    # --- Original Fields ---
-    pending_events: List[ClassifiedEvent] = Field(default_factory=list)
     
-    # Critical: This collects outputs from all sub-agents
-    domain_insights: Annotated[List[Dict[str, Any]], operator.add] = Field(default_factory=list)
+    # ===== INPUT FROM DOMAIN AGENTS =====
+    # This is where domain agents write their outputs
+    # Each domain agent adds a Dict with: source_event_id, domain, severity, summary, risk_score
+    # FIX: Added Annotated with reduce_insights to allow parallel writes and resetting
+    domain_insights: Annotated[List[Dict[str, Any]], reduce_insights] = Field(
+        default_factory=list,
+        description="Insights from domain agents (Social, Political, Economic, etc.)"
+    )
     
-    final_ranked_feed: List[Dict[str, Any]] = Field(default_factory=list)
-    risk_dashboard_snapshot: RiskMetrics = Field(default_factory=RiskMetrics)
-    run_mode: Literal["background_monitor", "user_investigation"] = "background_monitor"
+    # ===== AGGREGATED OUTPUTS =====
+    # After FeedAggregator processes domain_insights
+    final_ranked_feed: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Ranked and deduplicated feed for National Activity Feed"
+    )
     
-    # --- Fix Fields (Required for Graph Logic) ---
-    # These tracks the execution loop to prevent infinite recursion
-    run_count: int = Field(default=0)
-    max_runs: int = Field(default=5)
-    last_run_ts: Optional[datetime] = None
+    # Dashboard snapshot for Operational Risk Radar
+    risk_dashboard_snapshot: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Real-time risk metrics dashboard"
+    )
     
-    # Router decision storage (Critical for conditional edges)
-    route: Optional[str] = None
+    # ===== EXECUTION CONTROL =====
+    # Loop control to prevent infinite recursion
+    run_count: int = Field(
+        default=0,
+        description="Number of times graph has executed (safety counter)"
+    )
+    
+    max_runs: int = Field(
+        default=5,
+        description="Maximum allowed loop iterations"
+    )
+    
+    last_run_ts: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp of last execution"
+    )
+    
+    # ===== ROUTING CONTROL =====
+    # CRITICAL: Used by DataRefreshRouter for conditional edges
+    # Must be Optional[str] - None means END, "GraphInitiator" means loop
+    route: Optional[str] = Field(
+        default=None,
+        description="Router decision: None=END, 'GraphInitiator'=loop"
+    )
+    
+    class Config:
+        arbitrary_types_allowed = True

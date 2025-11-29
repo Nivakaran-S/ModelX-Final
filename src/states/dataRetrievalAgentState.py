@@ -1,11 +1,13 @@
+"""
+src/states/dataRetrievalAgentState.py
+Data Retrieval Agent State - handles scraping tasks
+"""
 import operator 
-from typing_extensions import Optional, Annotated, List, Literal, TypedDict
-from typing import Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from datetime import datetime
-from langchain_core.messages import BaseMessage
-from langgraph.graph import MessagesState
-from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
+from typing_extensions import Literal
+
 
 class ScrapingTask(BaseModel):
     """Instruction from Master Agent to Worker."""
@@ -29,7 +31,7 @@ class RawScrapedData(BaseModel):
     """Output from a Worker's tool execution."""
     source_tool: str
     raw_content: str
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
     status: Literal["success", "failed"]
 
 
@@ -42,21 +44,33 @@ class ClassifiedEvent(BaseModel):
 
 
 class DataRetrievalAgentState(BaseModel):
-    """State for the Orchestrator-Worker Workflow."""
-    messages: Annotated[List[BaseMessage], operator.add] = Field(default_factory=list)
+    """
+    State for the Data Retrieval Agent (Orchestrator-Worker pattern).
+    """
+    # Task queue
     generated_tasks: List[ScrapingTask] = Field(default_factory=list)
-    worker_results: Annotated[List[RawScrapedData], operator.add] = Field(
-        default_factory=list
-    )
-    classified_buffer: Annotated[List[ClassifiedEvent], operator.add] = Field(
-        default_factory=list
-    )
-    previous_tasks: List[str] = Field(default_factory=list)
     current_task: Optional[ScrapingTask] = None
+    
+    # Worker execution
     tasks_for_workers: List[Dict[str, Any]] = Field(default_factory=list)
-    worker: Any = None
+    worker: Any = None  # Holds worker graph outputs
+    
+    # Results
+    worker_results: List[RawScrapedData] = Field(default_factory=list)
     latest_worker_results: List[RawScrapedData] = Field(default_factory=list)
     
-    # --- Integration with Main Graph ---
-    # ADDED: Critical for passing data to the FeedAggregator
-    domain_insights: List[Dict[str, Any]] = Field(default_factory=list)
+    # Classified outputs
+    classified_buffer: List[ClassifiedEvent] = Field(default_factory=list)
+    
+    # History tracking
+    previous_tasks: List[str] = Field(default_factory=list)
+    
+    # ===== INTEGRATION WITH PARENT GRAPH =====
+    # CRITICAL: This is how data flows to CombinedAgentState
+    domain_insights: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Output formatted for parent graph FeedAggregator"
+    )
+    
+    class Config:
+        arbitrary_types_allowed = True

@@ -1,96 +1,79 @@
-from __future__ import annotations
-
-from datetime import datetime
-from typing_extensions import Optional, List, Dict, Any, TypedDict
-import operator
-import json
+"""
+src/graphs/intelligenceAgentGraph.py
+COMPLETE - Intelligence Agent Graph Builder
+"""
 import uuid
-
-import requests
-from bs4 import BeautifulSoup
-from typing_extensions import Annotated
-
 from langgraph.graph import StateGraph, END
 from src.states.intelligenceAgentState import IntelligenceAgentState
 from src.nodes.intelligenceAgentNode import intelligenceAgentNode
-from src.utils.utils import tool_dmc_alerts, tool_weather_nowcast
 from src.llms.groqllm import GroqLLM
 
+
 class IntelligenceGraphBuilder:
+    """
+    Builds the Intelligence Agent graph with orchestrator-worker pattern.
+    """
+    
     def __init__(self, llm):
         self.llm = llm
     
     def build_graph(self):
-        # Fixed: Naming convention (was meteorology_obj)
         intelligence_node = intelligenceAgentNode(self.llm)
         
         # --- Worker Sub-Graph ---
         worker_graph_builder = StateGraph(IntelligenceAgentState)
-        # Note: Verify 'intelligence_worker_agent' exists in your node class
         worker_graph_builder.add_node("worker_agent", intelligence_node.intelligence_worker_agent)
         worker_graph_builder.add_node("tool_node", intelligence_node.tool_node)
-
+        
         worker_graph_builder.set_entry_point("worker_agent")
         worker_graph_builder.add_edge("worker_agent", "tool_node")
         worker_graph_builder.add_edge("tool_node", END)
-
+        
         worker_graph = worker_graph_builder.compile()
-
-        # ============================================================
-        # BUILD MAIN INTELLIGENCE AGENT GRAPH
-        # ============================================================
-
+        
+        # --- Main Graph ---
         main_graph_builder = StateGraph(IntelligenceAgentState)
-
-        # Nodes
+        
+        # Add nodes
         main_graph_builder.add_node("data_change_detector", intelligence_node.data_change_detector)
         main_graph_builder.add_node("task_delegator", intelligence_node.task_delegator_master_agent)
         main_graph_builder.add_node("prepare_worker_tasks", intelligence_node.prepare_worker_tasks)
-
-        # Orchestrator-worker workflow (inside dotted box)
         main_graph_builder.add_node(
             "intelligence_workers",
-            lambda s: {"worker": worker_graph.map().invoke(s.get("tasks_for_workers", []))},
+            lambda s: {"worker": worker_graph.map().invoke(s.get("tasks_for_workers", []))}
         )
         main_graph_builder.add_node("aggregate_results", intelligence_node.aggregate_results)
-
-        # Feed creator
         main_graph_builder.add_node("feed_creator", intelligence_node.feed_creator_agent)
-
-        # --- ADAPTER NODE ---
+        
+        # CRITICAL ADAPTER: Convert string feed to domain_insights format
         def format_output(state):
-            """Wraps the string feed into the object format expected by the parent graph."""
-            feed_text = state.get("final_feed", "No updates.")
+            feed_text = state.get("final_feed", "No intelligence updates.")
             insight = {
                 "source_event_id": str(uuid.uuid4()),
-                "domain": "intelligence", # specific to this agent
-                "severity": "medium", 
+                "domain": "intelligence",
+                "severity": "medium",
                 "summary": feed_text,
                 "risk_score": 0.6
             }
             return {"domain_insights": [insight]}
-
+        
         main_graph_builder.add_node("format_output", format_output)
-
-        # Edges
+        
+        # Wire edges
         main_graph_builder.set_entry_point("data_change_detector")
         main_graph_builder.add_edge("data_change_detector", "task_delegator")
         main_graph_builder.add_edge("task_delegator", "prepare_worker_tasks")
         main_graph_builder.add_edge("prepare_worker_tasks", "intelligence_workers")
         main_graph_builder.add_edge("intelligence_workers", "aggregate_results")
         main_graph_builder.add_edge("aggregate_results", "feed_creator")
-        
-        # Route to formatter
         main_graph_builder.add_edge("feed_creator", "format_output")
         main_graph_builder.add_edge("format_output", END)
+        
+        return main_graph_builder.compile()
 
-        graph = main_graph_builder.compile()
-        return graph
 
-# ============================================================
-# RUN (for manual test)
-# ============================================================
-print("--- RUNNING INTELLIGENCE AGENT GRAPH ---\n")
+# Module-level compilation
+print("--- BUILDING INTELLIGENCE AGENT GRAPH ---")
 llm = GroqLLM().get_llm()
 graph = IntelligenceGraphBuilder(llm).build_graph()
-print("INTELLIGENCE Graph created successfully")
+print("✓ Intelligence Agent Graph compiled successfully")

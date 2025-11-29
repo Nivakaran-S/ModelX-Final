@@ -1,289 +1,251 @@
+"""
+src/nodes/meteorologicalAgentNode.py
+COMPLETE - Meteorological Agent Node
+Monitors weather alerts, DMC warnings, forecasts
+"""
 import json
 import uuid
-from typing import List, Literal
-from langchain_core.messages import HumanMessage, SystemMessage, get_buffer_string
-from langgraph.graph import END
-from src.states.meteorologicalAgentState import MeteorologicalAgentState,  ClassifiedEvent
-from src.utils.prompts import MASTER_AGENT_SYSTEM_PROMPT, MASTER_AGENT_HUMAN_PROMPT
-from src.utils.utils import get_today_str, TOOL_MAPPING, tool_dmc_alerts, tool_weather_nowcast
-from typing_extensions import Dict, Any
+from typing import List, Dict, Any
 from datetime import datetime
+from src.states.meteorologicalAgentState import MeteorologicalAgentState
+from src.utils.utils import tool_dmc_alerts, tool_weather_nowcast
+
 
 class MeteorologicalAgentNode:
+    """
+    Meteorological Agent - monitors weather and disaster alerts.
+    Implements the "Operational Risk Radar" weather component from your report.
+    """
+    
     def __init__(self, llm):
-        self.llm = llm 
+        self.llm = llm
 
+    # =========================================================================
+    # 1. DATA CHANGE DETECTOR
+    # =========================================================================
+    
+    def data_change_detector(self, state: MeteorologicalAgentState) -> Dict[str, Any]:
+        """
+        DATA CHANGE DETECTOR
         
-    def data_change_detector(self,
-        state: MeteorologicalAgentState,
-    ) -> Dict[str, Any]:
+        Probes DMC alerts and compares with previous run.
+        Sets change_detected flag if new alerts appeared.
         """
-        DATA CHANGE DETECTOR / UPDATED DATA FILTER AGENT
-
-        - Probes the DMC page quickly.
-        - Compares hash with previous run.
-        - Flags whether new/changed alerts are likely.
-        - NOTE: It does NOT block execution; it just annotates `change_detected`
-        so downstream nodes (e.g., feed creator) can highlight it.
-        """
-        print("--- [DATA CHANGE DETECTOR] ---")
-
-        # Lightweight probe: reuse full DMC scraper here for simplicity
+        print("[WEATHER] Data Change Detector")
+        
         dmc_data = tool_dmc_alerts()
         raw_json = json.dumps(dmc_data, sort_keys=True)
         current_hash = hash(raw_json)
         previous_hash = state.get("last_alerts_hash")
-
+        
         change = previous_hash is None or current_hash != previous_hash
+        
         if change:
-            print("   → Change detected in DMC alerts.")
+            print("  ✓ New weather alerts detected")
         else:
-            print("   → No change detected in DMC alerts.")
-
-        # We also push this as an initial worker result so feed creator always
-        # sees the latest DMC content, even before orchestrated tools.
+            print("  - No change in alerts")
+        
         initial_result = {
             "source_tool": "dmc_alerts_probe",
             "raw_content": raw_json,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.utcnow().isoformat()
         }
-
+        
         return {
             "change_detected": change,
             "last_alerts_hash": current_hash,
             "worker_results": [initial_result],
-            "latest_worker_results": [initial_result],
+            "latest_worker_results": [initial_result]
         }
 
-
-    def task_delegator_master_agent(
-        self,
-        state: MeteorologicalAgentState,
-    ) -> Dict[str, Any]:
+    # =========================================================================
+    # 2. TASK DELEGATOR
+    # =========================================================================
+    
+    def task_delegator_master_agent(self, state: MeteorologicalAgentState) -> Dict[str, Any]:
         """
-        TASK DELEGATOR – MASTER AGENT
-
-        - Always schedules both tools:
-            * Weather nowcast for several key cities.
-            * DMC alerts scraper as a full tool call.
-        - This is the entry into the orchestrator-worker workflow box.
+        TASK DELEGATOR - Plans weather monitoring tasks
+        
+        Always schedules:
+        - DMC alerts scraper
+        - Weather nowcast for key cities
         """
-        print("--- [TASK DELEGATOR / MASTER AGENT] ---")
-
+        print("[WEATHER] Task Delegator")
+        
         tasks: List[Dict[str, Any]] = []
-
-        # DMC alerts tool (full scrape)
-        tasks.append(
-            {
-                "tool_name": "dmc_alerts",
-                "parameters": {},
-                "priority": "high",
-            }
-        )
-
+        
+        # DMC alerts
+        tasks.append({
+            "tool_name": "dmc_alerts",
+            "parameters": {},
+            "priority": "high"
+        })
+        
         # Weather nowcast for multiple cities
-        for loc in ["Colombo", "Kandy", "Galle", "Jaffna"]:
-            tasks.append(
-                {
-                    "tool_name": "weather_nowcast",
-                    "parameters": {"location": loc},
-                    "priority": "normal",
-                }
-            )
-
-        print(f"   → Planned {len(tasks)} tasks for Meteorological Worker Agents.")
-
+        for city in ["Colombo", "Kandy", "Galle", "Jaffna"]:
+            tasks.append({
+                "tool_name": "weather_nowcast",
+                "parameters": {"location": city},
+                "priority": "normal"
+            })
+        
+        print(f"  → Planned {len(tasks)} weather monitoring tasks")
+        
         return {"generated_tasks": tasks}
 
-
-    def meteorological_worker_agent(
-            self,
-        state: MeteorologicalAgentState,
-    ) -> Dict[str, Any]:
+    # =========================================================================
+    # 3. WORKER AGENT
+    # =========================================================================
+    
+    def meteorological_worker_agent(self, state: MeteorologicalAgentState) -> Dict[str, Any]:
         """
-        METEOROLOGICAL WORKER AGENT
-
-        - Pops a single task from `generated_tasks` for this worker instance.
-        - In the mapped worker graph, each instance handles exactly one task.
+        WORKER AGENT - Pops and executes single task
         """
         tasks = state.get("generated_tasks", [])
         if not tasks:
-            print("--- [WORKER] No task available ---")
             return {}
-
+        
         task = tasks[0]
         remaining = tasks[1:]
-
-        print(f"--- [WORKER] Dispatching task -> {task['tool_name']} ---")
-
+        
+        print(f"[WEATHER WORKER] Executing -> {task['tool_name']}")
+        
         return {
             "current_task": task,
-            "generated_tasks": remaining,
+            "generated_tasks": remaining
         }
 
-
-    def tool_node(
-            self,
-        state: MeteorologicalAgentState,
-    ) -> Dict[str, Any]:
+    # =========================================================================
+    # 4. TOOL NODE
+    # =========================================================================
+    
+    def tool_node(self, state: MeteorologicalAgentState) -> Dict[str, Any]:
         """
-        TOOL NODE
-
-        - Executes the tool specified by `current_task`.
-        - This corresponds to the 'ToolNode' in the diagram, with
-        arrows to 'Weather Nowcast' and 'DMC alert scraper'.
+        TOOL NODE - Executes weather monitoring tools
         """
         task = state.get("current_task")
         if not task:
-            print("--- [TOOL NODE] No current task ---")
             return {}
-
+        
         tool_name = task["tool_name"]
         params = task.get("parameters", {}) or {}
-
-        print(f"--- [TOOL NODE] Executing tool -> {tool_name} ---")
-
+        
         if tool_name == "dmc_alerts":
             data = tool_dmc_alerts()
         elif tool_name == "weather_nowcast":
             data = tool_weather_nowcast(**params)
         else:
-            data = {"error": f"Unknown tool: {tool_name}", "tool_name": tool_name}
-
+            data = {"error": f"Unknown tool: {tool_name}"}
+        
         raw = json.dumps(data)
         result = {
             "source_tool": tool_name,
             "raw_content": raw,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.utcnow().isoformat()
         }
-
+        
         return {
             "worker_results": [result],
             "latest_worker_results": [result],
-            "current_task": None,
+            "current_task": None
         }
 
-
-    def prepare_worker_tasks(
-        self,
-        state: MeteorologicalAgentState,
-    ) -> Dict[str, Any]:
+    # =========================================================================
+    # 5. PREPARE WORKER TASKS
+    # =========================================================================
+    
+    def prepare_worker_tasks(self, state: MeteorologicalAgentState) -> Dict[str, Any]:
         """
-        Prepares the list of tasks for parallel worker execution.
-
-        - Each entry in `tasks_for_workers` is an initial state for a worker graph
-        that will run `meteorological_worker_agent` + `tool_node`.
+        Prepares parallel worker execution states
         """
         tasks = state.get("generated_tasks", [])
         initial_states = [{"generated_tasks": [t]} for t in tasks]
-
-        print(
-            f"--- [PREPARE WORKER TASKS] Spawning {len(initial_states)} "
-            "parallel Meteorological Worker Agents ---"
-        )
-
+        
+        print(f"[WEATHER] Spawning {len(initial_states)} parallel workers")
+        
         return {"tasks_for_workers": initial_states}
 
-
-    def aggregate_results(
-            self,
-        state: MeteorologicalAgentState,
-    ) -> Dict[str, Any]:
+    # =========================================================================
+    # 6. AGGREGATE RESULTS
+    # =========================================================================
+    
+    def aggregate_results(self, state: MeteorologicalAgentState) -> Dict[str, Any]:
         """
-        Aggregates results from all parallel workers.
-
-        - `state["worker"]` contains the outputs of each mapped worker run.
-        - We flatten them into `worker_results` and set `latest_worker_results`
-        for downstream use.
+        Aggregates results from parallel workers
         """
         outputs = state.get("worker", []) or []
         aggregated: List[Dict[str, Any]] = []
-
+        
         for out in outputs:
             aggregated.extend(out.get("worker_results", []))
-
-        print(f"--- [AGGREGATE RESULTS] Aggregated {len(aggregated)} worker results ---")
-
+        
+        print(f"[WEATHER] Aggregated {len(aggregated)} results")
+        
         return {
             "worker_results": aggregated,
-            "latest_worker_results": aggregated,
+            "latest_worker_results": aggregated
         }
 
-
-    def feed_creator_agent(
-            self,
-        state: MeteorologicalAgentState,
-    ) -> Dict[str, Any]:
+    # =========================================================================
+    # 7. FEED CREATOR
+    # =========================================================================
+    
+    def feed_creator_agent(self, state: MeteorologicalAgentState) -> Dict[str, Any]:
         """
-        FEED CREATOR AGENT
-
-        - Consumes all `worker_results` (DMC + nowcasts).
-        - Builds a consolidated meteorological feed and stores it in:
-            * `final_feed` – latest feed
-            * `feed_history` – append-only history
+        FEED CREATOR - Builds human-readable weather bulletin
         """
-        print("--- [FEED CREATOR AGENT] ---")
-
+        print("[WEATHER] Feed Creator")
+        
         all_results = state.get("worker_results", []) or []
-
+        
         latest_dmc_text = "No DMC alerts available."
         nowcast_blocks: List[str] = []
-
-        # Prefer full-tool DMC result if available; otherwise use probe.
+        
         dmc_full = None
         dmc_probe = None
-
+        
         for r in all_results:
             source_tool = r.get("source_tool", "")
             try:
                 data = json.loads(r.get("raw_content", "{}"))
-            except Exception:
+            except:
                 data = {}
-
+            
             if source_tool == "dmc_alerts":
                 dmc_full = data
             elif source_tool == "dmc_alerts_probe":
                 dmc_probe = data
             elif source_tool == "weather_nowcast":
                 loc = data.get("location", "Unknown")
-                text = data.get("forecast", "") or "No forecast text."
-                text = text[:800]  # keep reasonable size per location
+                text = data.get("forecast", "")[:800]
                 nowcast_blocks.append(f"• {loc}:\n{text}")
-
+        
         use_dmc = dmc_full or dmc_probe
         if use_dmc:
             alerts = use_dmc.get("alerts", [])
             latest_dmc_text = "\n\n".join(alerts) if alerts else "No alerts listed."
-
-        forecast_section = (
-            "\n\n".join(nowcast_blocks) if nowcast_blocks else "No nowcast data available."
-        )
-
+        
+        forecast_section = "\n\n".join(nowcast_blocks) if nowcast_blocks else "No nowcast data."
+        
         change_flag = state.get("change_detected", False)
-        change_line = (
-            "Recent change detected in severe weather alerts.\n"
-            if change_flag
-            else "No significant change detected in severe weather alerts since last run.\n"
-        )
+        change_line = "⚠️ NEW ALERTS DETECTED\n" if change_flag else ""
+        
+        bulletin = f"""🇱🇰 METEOROLOGICAL FEED
+{datetime.utcnow().strftime("%d %b %Y • %H:%M UTC")}
 
-        bulletin = f"""🇱🇰 SRI LANKA METEOROLOGICAL FEED
-    {datetime.utcnow().strftime("%d %b %Y • %H:%M UTC")}
+{change_line}
+📍 DMC ALERTS / ADVISORIES
+{latest_dmc_text}
 
-    {change_line}
-    ⚠️ DMC ALERTS / ADVISORIES
-    {latest_dmc_text}
+🌤️ WEATHER NOWCAST
+{forecast_section}
 
-    🌤️ WEATHER NOWCAST (Key Locations)
-    {forecast_section}
-
-    Source: Department of Meteorology Sri Lanka (meteo.gov.lk)
-    """
-
-        bulletin = bulletin.strip()
-
-        print("   → Feed created.")
-
+Source: Department of Meteorology Sri Lanka
+"""
+        
+        print("  ✓ Feed created")
+        
         return {
             "final_feed": bulletin,
-            "feed_history": [bulletin],
+            "feed_history": [bulletin]
         }

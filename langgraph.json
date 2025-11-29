@@ -6,8 +6,8 @@
         "political_agent_graph": "./src/graphs/politicalAgentGraph.py:graph",
         "economical_agent_graph": "./src/graphs/economicalAgentGraph.py:graph",
         "social_agent_graph": "./src/graphs/socialAgentGraph.py:graph",
-        "ModelXgraph": "./src/graphs/combinedAgentGraph.py:graph",
-        "ModelXgraph-New": "./src/graphs/ModelXGraph.py:graph"
+        "intelligence_agent_graph": "./src/graphs/intelligenceAgentGraph.py:graph",
+        "ModelXGraph": "./src/graphs/combinedAgentGraph.py:graph"
     },
     "env": "./env"
 }
