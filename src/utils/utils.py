@@ -172,25 +172,46 @@ def save_playwright_storage_state(site_name: str, storage_state: dict, out_dir: 
 
 def load_playwright_storage_state_path(site_name: str, out_dir: str = ".sessions") -> Optional[str]:
     """
-    Robustly finds the session file.
+    Robustly finds the session file in multiple possible locations.
+    Priority order:
+    1. src/utils/.sessions/ (where session_manager.py saves them)
+    2. .sessions/ (current working directory)
+    3. Root project .sessions/
     """
     filename = f"{site_name}_storage_state.json"
     
+    # Priority 1: Check src/utils/.sessions/ (most likely location)
+    src_utils_path = os.path.join(os.getcwd(), "src", "utils", out_dir, filename)
+    if os.path.exists(src_utils_path):
+        logger.info(f"[SESSION] ✅ Found session at {src_utils_path}")
+        return src_utils_path
+    
+    # Priority 2: Check current working directory .sessions/
     cwd_path = os.path.join(os.getcwd(), out_dir, filename)
     if os.path.exists(cwd_path):
-        logger.info(f"[SESSION] Found session at {cwd_path}")
+        logger.info(f"[SESSION] ✅ Found session at {cwd_path}")
         return cwd_path
     
+    # Priority 3: Check project root .sessions/
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     root_path = os.path.join(base_dir, out_dir, filename)
-
     if os.path.exists(root_path):
-        logger.info(f"[SESSION] Found session at {root_path}")
+        logger.info(f"[SESSION] ✅ Found session at {root_path}")
         return root_path
 
-    logger.warning(f"[SESSION] Could not find session file for {site_name}. Checked:\n - {cwd_path}\n - {root_path}")
-    return None
+    # Priority 4: Check if out_dir is actually the full path to src/utils/.sessions
+    direct_path = os.path.join(out_dir, filename)
+    if os.path.exists(direct_path):
+        logger.info(f"[SESSION] ✅ Found session at {direct_path}")
+        return direct_path
 
+    logger.warning(f"[SESSION] ❌ Could not find session file for {site_name}.")
+    logger.warning(f"Checked locations:")
+    logger.warning(f"  1. {src_utils_path}")
+    logger.warning(f"  2. {cwd_path}")
+    logger.warning(f"  3. {root_path}")
+    logger.warning(f"\n💡 Run 'python src/utils/session_manager.py' to create sessions.")
+    return None
 
 def create_or_restore_playwright_session(
     site_name: str,
@@ -1040,32 +1061,467 @@ def scrape_instagram(keywords: Optional[List[str]] = None, max_items: int = 10):
         return json.dumps({"error": str(e)})
 
 
+"""
+Production-Ready Social Media Scrapers
+- Clean text extraction
+- Multiple fallback strategies
+- Better error handling
+"""
+
+def _clean_facebook_text(text: str) -> str:
+    """
+    Clean garbled Facebook text.
+    Removes spacing between characters (e.g., "S p o n s o r e d" -> "Sponsored")
+    """
+    # Remove single-character spacing pattern
+    cleaned = re.sub(r'(\w)\s+(?=\w(?:\s+\w)*(?:\s|$))', r'\1', text)
+    
+    # Remove excessive whitespace
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    
+    # Remove common Facebook UI text
+    ui_patterns = [
+        r'Sp?-?o?-?n?-?s?-?o?-?r?-?e?-?d',
+        r'See more',
+        r'Shared with Public',
+        r'Shared with',
+    ]
+    for pattern in ui_patterns:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+    
+    return cleaned.strip()
+
+
+"""
+COMPLETE FIXED SCRAPERS - Copy these to replace the old ones in utils.py
+Properly extracts content, author, and text from Facebook and Twitter
+"""
+
+def _clean_facebook_text(text: str) -> str:
+    """Remove garbled spacing like 'S p o n s o r e d' -> 'Sponsored'"""
+    # Fix character spacing
+    cleaned = re.sub(r'(\w)-+', r'\1', text)  # Remove dashes between letters
+    cleaned = re.sub(r'(\w)\s+(?=\w\s)', r'\1', cleaned)  # Remove single spaces between letters
+    
+    # Remove excessive whitespace
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    
+    # Remove UI elements
+    ui_patterns = ['Shared with Public', 'Shared with', 'See more', '·']
+    for pattern in ui_patterns:
+        cleaned = cleaned.replace(pattern, '')
+    
+    return cleaned.strip()
+
+
+def _extract_facebook_post_content(container) -> Dict[str, Any]:
+    """
+    Extract structured post data from Facebook article container.
+    Returns: {author, content, url, timestamp}
+    """
+    result = {
+        'author': None,
+        'content': None,
+        'url': None,
+        'timestamp': None
+    }
+    
+    try:
+        # 1. EXTRACT AUTHOR
+        # Look for profile/page links
+        author_links = container.select('a[role="link"]')[:5]
+        for link in author_links:
+            text = link.get_text(strip=True)
+            href = link.get('href', '')
+            # Valid author: not too long, not a hashtag, has profile URL
+            if (8 < len(text) < 100 and 
+                not text.startswith('#') and 
+                ('profile.php' in href or len(href.split('/')) <= 5)):
+                result['author'] = _clean_facebook_text(text)
+                result['url'] = _make_absolute(href, 'https://www.facebook.com')
+                break
+        
+        # 2. EXTRACT CONTENT
+        # Strategy: Find divs with substantial text that aren't navigation
+        all_divs = container.find_all('div', recursive=True)
+        content_candidates = []
+        
+        for div in all_divs:
+            # Get direct text (not nested)
+            div_text = div.get_text(separator=' ', strip=True)
+            
+            # Filter criteria
+            is_substantial = 30 < len(div_text) < 5000
+            not_ui = not any(x in div_text[:50].lower() for x in ['filters', 'search results', 'facebook facebook'])
+            has_words = len(div_text.split()) > 5
+            
+            if is_substantial and not_ui and has_words:
+                content_candidates.append(div_text)
+        
+        # Get the longest candidate as main content
+        if content_candidates:
+            # Remove duplicates and sort by length
+            unique_content = list(set(content_candidates))
+            unique_content.sort(key=len, reverse=True)
+            
+            # Take longest that's not author name
+            for candidate in unique_content:
+                if result['author'] and result['author'] in candidate:
+                    # Remove author name from content
+                    candidate = candidate.replace(result['author'], '').strip()
+                
+                if len(candidate) > 50:
+                    result['content'] = _clean_facebook_text(candidate)
+                    break
+        
+        # 3. EXTRACT POST URL (more specific)
+        post_links = container.find_all('a', href=True)
+        for link in post_links:
+            href = link.get('href', '')
+            # Look for actual post permalinks
+            if any(pattern in href for pattern in ['/posts/', '/photos/', 'story_fbid=', '/videos/']):
+                result['url'] = _make_absolute(href, 'https://www.facebook.com')
+                break
+        
+        # 4. EXTRACT TIMESTAMP
+        time_elements = container.find_all(['abbr', 'time'])
+        for elem in time_elements:
+            timestamp = elem.get_text(strip=True)
+            if timestamp and len(timestamp) < 50:
+                result['timestamp'] = timestamp
+                break
+        
+    except Exception as e:
+        logger.debug(f"[FB_EXTRACT] Error: {e}")
+    
+    return result
+
+
 @tool
 def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
     """
-    Facebook scraping via Playwright session. Use FB credentials in env if creating a session.
+    Facebook scraper - extracts author, full content, and metadata.
+    Uses Playwright with existing session.
     """
     site = "facebook"
-    login_flow = {
-        "login_url": "https://www.facebook.com/login",
-        "steps": [
-            {"type": "fill", "selector": 'input[name="email"]', "value_env": "FACEBOOK_USER"},
-            {"type": "fill", "selector": 'input[name="pass"]', "value_env": "FACEBOOK_PASSWORD"},
-            {"type": "click", "selector": 'button[name="login"]'},
-            {"type": "wait", "selector": 'div[role="navigation"]', "timeout": 20000}
-        ]
-    }
-    q = "+".join(keywords) if keywords else "Sri Lanka"
-    url = f"https://www.facebook.com/search/top/?q={quote_plus(q)}"
+    
+    # Find session
+    session_path = load_playwright_storage_state_path(site, out_dir="src/utils/.sessions")
+    if not session_path:
+        session_path = load_playwright_storage_state_path(site, out_dir=".sessions")
+    
+    if not session_path:
+        return json.dumps({
+            "error": "No Facebook session found",
+            "solution": "Run: python src/utils/session_manager.py (option 2)"
+        }, default=str)
+    
+    q = " ".join(keywords) if keywords else "Sri Lanka"
+    url = f"https://www.facebook.com/search/posts/?q={quote_plus(q)}"
+    
     try:
-        r = scrape_authenticated_page_via_playwright(site, url, login_flow=login_flow)
-        if "html" in r:
-            items = _simple_parse_posts_from_html(r["html"], "https://www.facebook.com", max_items=max_items)
-            return json.dumps({"site": "Facebook", "results": items, "storage_state": r.get("storage_state")}, default=str)
-        return json.dumps(r, default=str)
+        logger.info(f"[FACEBOOK] Searching: {q}")
+        
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(storage_state=session_path)
+            page = context.new_page()
+            
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                
+                # Wait for articles
+                try:
+                    page.wait_for_selector('div[role="article"]', timeout=10000)
+                except:
+                    logger.warning("[FACEBOOK] Posts loading slowly")
+                
+                # Scroll to load content
+                for i in range(4):
+                    page.evaluate("window.scrollBy(0, 1000)")
+                    time.sleep(1.2)
+                
+                html = page.content()
+                
+            finally:
+                context.close()
+                browser.close()
+        
+        # Parse HTML
+        soup = BeautifulSoup(html, "html.parser")
+        articles = soup.select('div[role="article"]')
+        
+        logger.info(f"[FACEBOOK] Found {len(articles)} articles")
+        
+        posts = []
+        seen = set()
+        
+        for article in articles:
+            if len(posts) >= max_items:
+                break
+            
+            # Extract structured data
+            post_data = _extract_facebook_post_content(article)
+            
+            # Validate
+            if not post_data['content'] or len(post_data['content']) < 30:
+                continue
+            
+            # Check for duplicates
+            signature = post_data['content'][:100]
+            if signature in seen:
+                continue
+            seen.add(signature)
+            
+            # Build result
+            posts.append({
+                'author': post_data['author'] or 'Unknown',
+                'title': post_data['content'][:100] + '...' if len(post_data['content']) > 100 else post_data['content'],
+                'content': post_data['content'][:800],
+                'url': post_data['url'] or 'https://www.facebook.com',
+                'timestamp': post_data['timestamp'],
+                'source': 'Facebook'
+            })
+        
+        return json.dumps({
+            "site": "Facebook",
+            "query": q,
+            "results": posts,
+            "total_found": len(posts),
+            "fetched_at": datetime.utcnow().isoformat()
+        }, default=str, indent=2)
+        
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        logger.error(f"[FACEBOOK] {e}")
+        return json.dumps({"error": str(e)}, default=str)
 
+
+@tool
+def scrape_twitter(query: str = "Sri Lanka", max_items: int = 20):
+    """
+    Twitter scraper - extracts actual tweet text, author, and metadata.
+    Multi-strategy: Playwright session → Nitter fallback
+    """
+    
+    # STRATEGY 1: Authenticated Playwright Session
+    session_path = load_playwright_storage_state_path("twitter", out_dir="src/utils/.sessions")
+    if not session_path:
+        session_path = load_playwright_storage_state_path("twitter", out_dir=".sessions")
+    
+    if session_path and PLAYWRIGHT_AVAILABLE:
+        try:
+            logger.info(f"[TWITTER] Using authenticated session for: {query}")
+            
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(storage_state=session_path)
+                page = context.new_page()
+                
+                try:
+                    search_url = f"https://x.com/search?q={quote_plus(query)}&src=typed_query&f=live"
+                    page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
+                    
+                    # Wait for tweets
+                    try:
+                        page.wait_for_selector('article', timeout=12000)
+                    except:
+                        logger.warning("[TWITTER] Tweets loading slowly")
+                    
+                    # Scroll to load more
+                    for i in range(4):
+                        page.evaluate("window.scrollBy(0, 1200)")
+                        time.sleep(1.5)
+                    
+                    html = page.content()
+                    
+                    # Save HTML for debugging (optional)
+                    # with open('twitter_debug.html', 'w', encoding='utf-8') as f:
+                    #     f.write(html)
+                    
+                finally:
+                    context.close()
+                    browser.close()
+            
+            # Parse tweets
+            soup = BeautifulSoup(html, "html.parser")
+            articles = soup.find_all('article')
+            
+            logger.info(f"[TWITTER] Found {len(articles)} article elements")
+            
+            tweets = []
+            seen = set()
+            
+            for article in articles:
+                try:
+                    # EXTRACT TWEET TEXT
+                    # Method 1: data-testid="tweetText"
+                    tweet_text = None
+                    text_div = article.find('div', attrs={'data-testid': 'tweetText'})
+                    
+                    if text_div:
+                        tweet_text = text_div.get_text(separator=' ', strip=True)
+                    
+                    # Method 2: Look for lang attribute (tweet language)
+                    if not tweet_text:
+                        lang_divs = article.find_all('div', attrs={'lang': True})
+                        for div in lang_divs:
+                            text = div.get_text(separator=' ', strip=True)
+                            if 20 < len(text) < 1000:  # Valid tweet length
+                                tweet_text = text
+                                break
+                    
+                    # Method 3: Get all spans and reconstruct
+                    if not tweet_text:
+                        all_spans = article.find_all('span')
+                        text_parts = [s.get_text(strip=True) for s in all_spans if len(s.get_text(strip=True)) > 5]
+                        combined = ' '.join(text_parts)
+                        if 20 < len(combined) < 1000:
+                            tweet_text = combined
+                    
+                    if not tweet_text or len(tweet_text) < 15:
+                        continue
+                    
+                    # Check for duplicates
+                    if tweet_text in seen:
+                        continue
+                    seen.add(tweet_text)
+                    
+                    # EXTRACT AUTHOR
+                    author = "Unknown"
+                    # Look for username with @ symbol
+                    username_elem = article.find(string=re.compile(r'@\w+'))
+                    if username_elem:
+                        author = username_elem.strip()
+                    else:
+                        # Alternative: look for aria-label with author info
+                        author_link = article.find('a', href=re.compile(r'/\w+$'))
+                        if author_link:
+                            author = '@' + author_link.get('href', '').strip('/').split('/')[-1]
+                    
+                    # EXTRACT TIMESTAMP
+                    timestamp = None
+                    time_elem = article.find('time')
+                    if time_elem:
+                        timestamp = time_elem.get('datetime', time_elem.get_text(strip=True))
+                    
+                    # EXTRACT URL
+                    url = None
+                    status_links = article.find_all('a', href=re.compile(r'/status/\d+'))
+                    if status_links:
+                        href = status_links[0].get('href', '')
+                        url = f"https://x.com{href}" if href.startswith('/') else href
+                    
+                    tweets.append({
+                        'text': tweet_text[:500],
+                        'author': author,
+                        'timestamp': timestamp,
+                        'url': url or 'https://x.com',
+                        'source': 'Twitter (authenticated)'
+                    })
+                    
+                    if len(tweets) >= max_items:
+                        break
+                    
+                except Exception as e:
+                    logger.debug(f"[TWITTER] Error parsing tweet: {e}")
+                    continue
+            
+            if tweets:
+                return json.dumps({
+                    "source": "twitter_authenticated",
+                    "query": query,
+                    "results": tweets,
+                    "total_found": len(tweets),
+                    "fetched_at": datetime.utcnow().isoformat()
+                }, default=str, indent=2)
+            else:
+                logger.warning("[TWITTER] No tweets extracted, trying Nitter fallback")
+        
+        except Exception as e:
+            logger.warning(f"[TWITTER] Playwright failed: {e}")
+    
+    # STRATEGY 2: Nitter Fallback
+    logger.info("[TWITTER] Attempting Nitter instances")
+    
+    nitter_instances = [
+        "https://nitter.poast.org",
+        "https://nitter.net",
+        "https://nitter.privacydev.net",
+    ]
+    
+    for instance in nitter_instances:
+        try:
+            search_url = f"{instance}/search?f=tweets&q={quote_plus(query)}"
+            
+            resp = requests.get(
+                search_url,
+                headers=DEFAULT_HEADERS,
+                timeout=10
+            )
+            
+            if resp.status_code != 200:
+                continue
+            
+            soup = BeautifulSoup(resp.text, "html.parser")
+            timeline_items = soup.select('.timeline-item')
+            
+            if not timeline_items:
+                continue
+            
+            tweets = []
+            
+            for item in timeline_items:
+                try:
+                    content_div = item.select_one('.tweet-content')
+                    if not content_div:
+                        continue
+                    
+                    text = content_div.get_text(separator=' ', strip=True)
+                    if len(text) < 15:
+                        continue
+                    
+                    author_elem = item.select_one('.username')
+                    author = author_elem.get_text(strip=True) if author_elem else "Unknown"
+                    
+                    time_elem = item.select_one('.tweet-date a')
+                    timestamp = time_elem.get('title') if time_elem else None
+                    
+                    link_elem = item.select_one('.tweet-link')
+                    url = _make_absolute(link_elem.get('href', ''), instance) if link_elem else instance
+                    
+                    tweets.append({
+                        'text': text[:500],
+                        'author': author,
+                        'timestamp': timestamp,
+                        'url': url,
+                        'source': f'Nitter'
+                    })
+                    
+                    if len(tweets) >= max_items:
+                        break
+                
+                except Exception as e:
+                    continue
+            
+            if tweets:
+                return json.dumps({
+                    "source": f"nitter_{urlparse(instance).netloc}",
+                    "query": query,
+                    "results": tweets,
+                    "total_found": len(tweets),
+                    "fetched_at": datetime.utcnow().isoformat()
+                }, default=str, indent=2)
+        
+        except Exception as e:
+            logger.debug(f"[TWITTER] {instance} failed: {e}")
+            continue
+    
+    return json.dumps({
+        "error": "Could not fetch tweets from any source",
+        "query": query,
+        "attempted": ["authenticated_session", "nitter_instances"],
+        "suggestion": "Check if session is expired: python validate_sessions.py"
+    }, default=str)
 
 @tool
 def scrape_reddit(keywords: List[str], limit: int = 20, subreddit: Optional[str] = None):
@@ -1077,45 +1533,45 @@ def scrape_reddit(keywords: List[str], limit: int = 20, subreddit: Optional[str]
     return json.dumps(data, default=str)
 
 
-@tool
-def scrape_twitter(query: str = "Sri Lanka", use_playwright: bool = True, storage_state_site: Optional[str] = "twitter"):
-    """
-    Twitter trending/search wrapper. For trending, call scrape_twitter_trending_srilanka().
-    For search, this will attempt Playwright fetch if available, else Nitter fallback.
-    """
-    try:
-        if query.strip().lower() in ("trending", "trends", "trending srilanka", "trending sri lanka"):
-            return json.dumps(scrape_twitter_trending_srilanka(use_playwright=use_playwright, storage_state_site=storage_state_site), default=str)
+# @tool
+# def scrape_twitter(query: str = "Sri Lanka", use_playwright: bool = True, storage_state_site: Optional[str] = "twitter"):
+#     """
+#     Twitter trending/search wrapper. For trending, call scrape_twitter_trending_srilanka().
+#     For search, this will attempt Playwright fetch if available, else Nitter fallback.
+#     """
+#     try:
+#         if query.strip().lower() in ("trending", "trends", "trending srilanka", "trending sri lanka"):
+#             return json.dumps(scrape_twitter_trending_srilanka(use_playwright=use_playwright, storage_state_site=storage_state_site), default=str)
         
-        if use_playwright and PLAYWRIGHT_AVAILABLE:
-            storage_state = None
-            if storage_state_site:
-                storage_state = load_playwright_storage_state_path(storage_state_site)
+#         if use_playwright and PLAYWRIGHT_AVAILABLE:
+#             storage_state = None
+#             if storage_state_site:
+#                 storage_state = load_playwright_storage_state_path(storage_state_site)
             
-            search_url = f"https://twitter.com/search?q={quote_plus(query)}&src=typed_query"
-            try:
-                html = playwright_fetch_html_using_session(search_url, storage_state or "", headless=True)
-                if html:
-                    items = _simple_parse_posts_from_html(html, "https://twitter.com", max_items=20)
-                    return json.dumps({"source": "twitter_playwright", "results": items}, default=str)
-            except Exception as e:
-                logger.debug(f"[TWITTER] Playwright search failed: {e}")
+#             search_url = f"https://twitter.com/search?q={quote_plus(query)}&src=typed_query"
+#             try:
+#                 html = playwright_fetch_html_using_session(search_url, storage_state or "", headless=True)
+#                 if html:
+#                     items = _simple_parse_posts_from_html(html, "https://twitter.com", max_items=20)
+#                     return json.dumps({"source": "twitter_playwright", "results": items}, default=str)
+#             except Exception as e:
+#                 logger.debug(f"[TWITTER] Playwright search failed: {e}")
         
-        nitter = "https://nitter.net"
-        search_url = f"{nitter}/search?f=tweets&q={quote_plus(query)}"
-        resp = _safe_get(search_url)
-        if not resp:
-            return json.dumps({"error": "Could not fetch Twitter via Playwright or Nitter fallback"})
-        soup = BeautifulSoup(resp.text, "html.parser")
-        items = []
-        for a in soup.select("div.timeline-item"):
-            t = a.get_text(separator=" ", strip=True)
-            link = a.find("a", href=True)
-            href = _make_absolute(link["href"], nitter) if link else None
-            items.append({"text": t[:400], "url": href})
-        return json.dumps({"source": "nitter", "results": items[:20]}, default=str)
-    except Exception as e:
-        return json.dumps({"error": str(e)})
+#         nitter = "https://nitter.net"
+#         search_url = f"{nitter}/search?f=tweets&q={quote_plus(query)}"
+#         resp = _safe_get(search_url)
+#         if not resp:
+#             return json.dumps({"error": "Could not fetch Twitter via Playwright or Nitter fallback"})
+#         soup = BeautifulSoup(resp.text, "html.parser")
+#         items = []
+#         for a in soup.select("div.timeline-item"):
+#             t = a.get_text(separator=" ", strip=True)
+#             link = a.find("a", href=True)
+#             href = _make_absolute(link["href"], nitter) if link else None
+#             items.append({"text": t[:400], "url": href})
+#         return json.dumps({"source": "nitter", "results": items[:20]}, default=str)
+#     except Exception as e:
+#         return json.dumps({"error": str(e)})
 
 
 @tool
