@@ -1,63 +1,66 @@
-# Core LangGraph & LangChain
-langgraph>=0.2.0
-langchain-core>=0.3.0
-langchain-groq>=0.2.0
+# ---------------------------------------------------------
+# Core LangGraph & LangChain (Fully Compatible)
+# ---------------------------------------------------------
+langgraph
+langchain
+langchain-core
+langchain-community
+langchain-groq
 
+# ---------------------------------------------------------
 # LLM Providers
-groq>=0.11.0
+# ---------------------------------------------------------
+groq
 
+# ---------------------------------------------------------
 # Data Processing
-pydantic>=2.0.0
-python-dotenv>=1.0.0
+# ---------------------------------------------------------
+pydantic
+python-dotenv
+python-dateutil
+pytz
+pandas
 
+# ---------------------------------------------------------
 # Web Scraping
-requests>=2.31.0
-beautifulsoup4>=4.12.0
-lxml>=5.0.0
+# ---------------------------------------------------------
+requests
+beautifulsoup4
+lxml
 
+# ---------------------------------------------------------
 # Financial Data
-yfinance>=0.2.0
+# ---------------------------------------------------------
+yfinance
 
-# Utilities
-python-dateutil>=2.8.0
-pytz>=2024.1
+# ---------------------------------------------------------
+# Browser Automation
+# ---------------------------------------------------------
 playwright
-# Optional: For enhanced functionality
-# google-cloud-translate>=3.15.0  # For Sinhala/Tamil translation
-# selenium>=4.15.0  # For dynamic page scraping
-# newspaper3k>=0.2.8  # For article extraction
 
-# Development & Testing
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-black>=23.0.0
-flake8>=6.0.0
-
-# Dashboard (Optional - for demo)
-streamlit>=1.28.0
-plotly>=5.18.0
-pandas>=2.0.0
-
-# Core Framework
-langgraph==0.2.16
-langchain==0.3.0
-langchain-core==0.3.0
-langchain-groq==0.2.0
-
+# ---------------------------------------------------------
 # API Server
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-websockets==12.0
+# ---------------------------------------------------------
+fastapi
+uvicorn[standard]
+websockets
+python-multipart
 
-# Data Processing
-pydantic==2.5.0
-beautifulsoup4==4.12.2
-requests==2.31.0
-yfinance==0.2.40
+# ---------------------------------------------------------
+# PDF / File Utilities
+# ---------------------------------------------------------
+pypdf
 
-# Browser Automation (Optional)
-playwright==1.40.0
+# ---------------------------------------------------------
+# Development & Testing
+# ---------------------------------------------------------
+pytest
+pytest-asyncio
+black
+flake8
 
-# Utilities
-python-dotenv==1.0.0
-python-multipart==0.0.6
+# ---------------------------------------------------------
+# Dashboard (Optional)
+# ---------------------------------------------------------
+streamlit
+plotly
