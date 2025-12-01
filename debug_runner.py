@@ -200,6 +200,29 @@ def main():
             )
         else:
             print("\n⚠️  Facebook session not found - skipping")
+
+        if "instagram" in available_sessions:
+            run_test(
+                "Instagram",
+                scrape_instagram,
+                "Instagram search results",
+                keywords=["Sri Lanka", "Elon musk", "business"],
+                max_items=5
+            )
+        else:
+            print("\n⚠️  Facebook session not found - skipping")
+
+        if "linkedin" in available_sessions:
+            run_test(
+                "Linkedin",
+                scrape_linkedin,
+                "Linkedin search results",
+                keywords=["Sri Lanka", "Elon musk", "business"],
+                max_items=5
+            )
+        else:
+            print("\n⚠️  Facebook session not found - skipping")
+
         
         if "twitter" in available_sessions:
             run_test(

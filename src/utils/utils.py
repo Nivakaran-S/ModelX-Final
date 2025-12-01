@@ -853,7 +853,7 @@ def scrape_train_schedule_impl(
 # TWITTER TRENDING
 # ============================================
 
-def _scrape_twitter_trending_with_playwright(storage_state_path: Optional[str] = None, headless: bool = True) -> List[Dict[str, Any]]:
+def _scrape_twitter_trending_with_playwright(storage_state_path: Optional[str] = None, headless: bool = False) -> List[Dict[str, Any]]:
     ensure_playwright()
     trending = []
     with sync_playwright() as p:
@@ -1061,36 +1061,6 @@ def scrape_instagram(keywords: Optional[List[str]] = None, max_items: int = 10):
         return json.dumps({"error": str(e)})
 
 
-"""
-Production-Ready Social Media Scrapers
-- Clean text extraction
-- Multiple fallback strategies
-- Better error handling
-"""
-
-def _clean_facebook_text(text: str) -> str:
-    """
-    Clean garbled Facebook text.
-    Removes spacing between characters (e.g., "S p o n s o r e d" -> "Sponsored")
-    """
-    # Remove single-character spacing pattern
-    cleaned = re.sub(r'(\w)\s+(?=\w(?:\s+\w)*(?:\s|$))', r'\1', text)
-    
-    # Remove excessive whitespace
-    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-    
-    # Remove common Facebook UI text
-    ui_patterns = [
-        r'Sp?-?o?-?n?-?s?-?o?-?r?-?e?-?d',
-        r'See more',
-        r'Shared with Public',
-        r'Shared with',
-    ]
-    for pattern in ui_patterns:
-        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
-    
-    return cleaned.strip()
-
 
 """
 COMPLETE FIXED SCRAPERS - Copy these to replace the old ones in utils.py
@@ -1223,25 +1193,26 @@ def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
         logger.info(f"[FACEBOOK] Searching: {q}")
         
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(headless=False)
             context = browser.new_context(storage_state=session_path)
             page = context.new_page()
             
             try:
-                page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 
                 # Wait for articles
                 try:
-                    page.wait_for_selector('div[role="article"]', timeout=10000)
+                    page.wait_for_selector('div[role="article"]', timeout=45000)
                 except:
                     logger.warning("[FACEBOOK] Posts loading slowly")
                 
                 # Scroll to load content
-                for i in range(4):
+                for i in range(8):
                     page.evaluate("window.scrollBy(0, 1000)")
-                    time.sleep(1.2)
+                    time.sleep(3)
                 
                 html = page.content()
+                
                 
             finally:
                 context.close()
@@ -1249,7 +1220,9 @@ def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
         
         # Parse HTML
         soup = BeautifulSoup(html, "html.parser")
+        print("SOUP", soup)
         articles = soup.select('div[role="article"]')
+        
         
         logger.info(f"[FACEBOOK] Found {len(articles)} articles")
         
@@ -1296,6 +1269,8 @@ def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
         return json.dumps({"error": str(e)}, default=str)
 
 
+
+
 @tool
 def scrape_twitter(query: str = "Sri Lanka", max_items: int = 20):
     """
@@ -1313,7 +1288,7 @@ def scrape_twitter(query: str = "Sri Lanka", max_items: int = 20):
             logger.info(f"[TWITTER] Using authenticated session for: {query}")
             
             with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
+                browser = p.chromium.launch(headless=False)
                 context = browser.new_context(storage_state=session_path)
                 page = context.new_page()
                 
