@@ -442,11 +442,7 @@ Source: Multi-platform aggregation (Twitter, Facebook, LinkedIn, Instagram, Redd
         # Create integration output
         insight = {
             "source_event_id": str(uuid.uuid4()),
-            "domain": "political",
-            "severity": "high",
-            "summary": llm_summary,
-            "risk_score": 0.7,
-            "structured_data": structured_feeds
+                    "structured_data": structured_feeds
         }
         
         print("  ✓ Final Feed Formatted")
@@ -455,4 +451,216 @@ Source: Multi-platform aggregation (Twitter, Facebook, LinkedIn, Instagram, Redd
             "final_feed": bulletin,
             "feed_history": [bulletin],
             "domain_insights": [insight]
+        }
+    
+    # ============================================
+    # MODULE 4: FEED AGGREGATOR & STORAGE
+    # ============================================
+    
+    def aggregate_and_store_feeds(self, state: PoliticalAgentState) -> Dict[str, Any]:
+        """
+        Module 4: Aggregate, deduplicate, and store feeds
+        - Check uniqueness using Neo4j (URL + content hash)
+        - Store unique posts in Neo4j
+        - Store unique posts in ChromaDB for RAG
+        - Append to CSV dataset for ML training
+        """
+        print("[MODULE 4] Aggregating and Storing Feeds")
+        
+        from src.utils.db_manager import (
+            Neo4jManager, 
+            ChromaDBManager, 
+            extract_post_data
+        )
+        import csv
+        import os
+        
+        # Initialize database managers
+        neo4j_manager = Neo4jManager()
+        chroma_manager = ChromaDBManager()
+        
+        # Get all worker results from state
+        all_worker_results = state.get("worker_results", [])
+        
+        # Statistics
+        total_posts = 0
+        unique_posts = 0
+        duplicate_posts = 0
+        stored_neo4j = 0
+        stored_chroma = 0
+        stored_csv = 0
+        
+        # Setup CSV dataset
+        dataset_dir = os.getenv("DATASET_PATH", "./datasets/political_feeds")
+        os.makedirs(dataset_dir, exist_ok=True)
+        
+        csv_filename = f"political_feeds_{datetime.now().strftime('%Y%m')}.csv"
+        csv_path = os.path.join(dataset_dir, csv_filename)
+        
+        # CSV headers
+        csv_headers = [
+            "post_id", "timestamp", "platform", "category", "district",
+            "poster", "post_url", "title", "text", "content_hash",
+            "engagement_score", "engagement_likes", "engagement_shares", 
+            "engagement_comments", "source_tool"
+        ]
+        
+        # Check if CSV exists to determine if we need to write headers
+        file_exists = os.path.exists(csv_path)
+        
+        try:
+            # Open CSV file in append mode
+            with open(csv_path, 'a', newline='', encoding='utf-8') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
+                
+                # Write headers if new file
+                if not file_exists:
+                    writer.writeheader()
+                    print(f"  ✓ Created new CSV dataset: {csv_path}")
+                else:
+                    print(f"  ✓ Appending to existing CSV: {csv_path}")
+                
+                # Process each worker result
+                for worker_result in all_worker_results:
+                    category = worker_result.get("category", "unknown")
+                    platform = worker_result.get("platform", "") or worker_result.get("subcategory", "")
+                    source_tool = worker_result.get("source_tool", "")
+                    district = worker_result.get("district", "")
+                    
+                    # Parse raw content
+                    raw_content = worker_result.get("raw_content", "")
+                    if not raw_content:
+                        continue
+                    
+                    try:
+                        # Try to parse JSON content
+                        if isinstance(raw_content, str):
+                            data = json.loads(raw_content)
+                        else:
+                            data = raw_content
+                        
+                        # Handle different data structures
+                        posts = []
+                        if isinstance(data, list):
+                            posts = data
+                        elif isinstance(data, dict):
+                            # Check for common result keys
+                            posts = (data.get("results") or 
+                                   data.get("data") or 
+                                   data.get("posts") or 
+                                   data.get("items") or 
+                                   [])
+                            
+                            # If still empty, treat the dict itself as a post
+                            if not posts and (data.get("title") or data.get("text")):
+                                posts = [data]
+                        
+                        # Process each post
+                        for raw_post in posts:
+                            total_posts += 1
+                            
+                            # Skip if error object
+                            if isinstance(raw_post, dict) and "error" in raw_post:
+                                continue
+                            
+                            # Extract normalized post data
+                            post_data = extract_post_data(
+                                raw_post=raw_post,
+                                category=category,
+                                platform=platform or "unknown",
+                                source_tool=source_tool
+                            )
+                            
+                            if not post_data:
+                                continue
+                            
+                            # Override district if from worker result
+                            if district:
+                                post_data["district"] = district
+                            
+                            # Check uniqueness with Neo4j
+                            is_dup = neo4j_manager.is_duplicate(
+                                post_url=post_data["post_url"],
+                                content_hash=post_data["content_hash"]
+                            )
+                            
+                            if is_dup:
+                                duplicate_posts += 1
+                                continue
+                            
+                            # Unique post - store it
+                            unique_posts += 1
+                            
+                            # Store in Neo4j
+                            if neo4j_manager.store_post(post_data):
+                                stored_neo4j += 1
+                            
+                            # Store in ChromaDB
+                            if chroma_manager.add_document(post_data):
+                                stored_chroma += 1
+                            
+                            # Store in CSV
+                            try:
+                                csv_row = {
+                                    "post_id": post_data["post_id"],
+                                    "timestamp": post_data["timestamp"],
+                                    "platform": post_data["platform"],
+                                    "category": post_data["category"],
+                                    "district": post_data["district"],
+                                    "poster": post_data["poster"],
+                                    "post_url": post_data["post_url"],
+                                    "title": post_data["title"],
+                                    "text": post_data["text"],
+                                    "content_hash": post_data["content_hash"],
+                                    "engagement_score": post_data["engagement"].get("score", 0),
+                                    "engagement_likes": post_data["engagement"].get("likes", 0),
+                                    "engagement_shares": post_data["engagement"].get("shares", 0),
+                                    "engagement_comments": post_data["engagement"].get("comments", 0),
+                                    "source_tool": post_data["source_tool"]
+                                }
+                                writer.writerow(csv_row)
+                                stored_csv += 1
+                            except Exception as e:
+                                print(f"  ⚠️ CSV write error: {e}")
+                    
+                    except Exception as e:
+                        print(f"  ⚠️ Error processing worker result: {e}")
+                        continue
+        
+        except Exception as e:
+            print(f"  ⚠️ CSV file error: {e}")
+        
+        # Close database connections
+        neo4j_manager.close()
+        
+        # Print statistics
+        print(f"\n  📊 AGGREGATION STATISTICS")
+        print(f"  Total Posts Processed: {total_posts}")
+        print(f"  Unique Posts: {unique_posts}")
+        print(f"  Duplicate Posts: {duplicate_posts}")
+        print(f"  Stored in Neo4j: {stored_neo4j}")
+        print(f"  Stored in ChromaDB: {stored_chroma}")
+        print(f"  Stored in CSV: {stored_csv}")
+        print(f"  Dataset Path: {csv_path}")
+        
+        # Get database counts
+        neo4j_total = neo4j_manager.get_post_count() if neo4j_manager.driver else 0
+        chroma_total = chroma_manager.get_document_count() if chroma_manager.collection else 0
+        
+        print(f"\n  💾 DATABASE TOTALS")
+        print(f"  Neo4j Total Posts: {neo4j_total}")
+        print(f"  ChromaDB Total Docs: {chroma_total}")
+        
+        return {
+            "aggregator_stats": {
+                "total_processed": total_posts,
+                "unique_posts": unique_posts,
+                "duplicate_posts": duplicate_posts,
+                "stored_neo4j": stored_neo4j,
+                "stored_chroma": stored_chroma,
+                "stored_csv": stored_csv,
+                "neo4j_total": neo4j_total,
+                "chroma_total": chroma_total
+            },
+            "dataset_path": csv_path
         }

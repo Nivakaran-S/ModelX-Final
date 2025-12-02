@@ -64,3 +64,13 @@ flake8
 # ---------------------------------------------------------
 streamlit
 plotly
+
+# ---------------------------------------------------------
+# Database & Vector Stores
+# ---------------------------------------------------------
+neo4j
+langchain-neo4j
+chromadb
+langchain-chroma
+langchain-text-splitters
+sentence-transformers

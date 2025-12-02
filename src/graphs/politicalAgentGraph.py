@@ -85,6 +85,7 @@ class PoliticalGraphBuilder:
         1. Module 1 (Official) + Module 2 (Social) run in parallel
         2. Wait for both to complete
         3. Module 3 (Feed Generation) processes aggregated results
+        4. Module 4 (Feed Aggregator) stores unique posts
         """
         node = PoliticalAgentNode(self.llm)
         
@@ -100,6 +101,7 @@ class PoliticalGraphBuilder:
         main_graph.add_node("official_sources_module", official_subgraph.invoke)
         main_graph.add_node("social_media_module", social_subgraph.invoke)
         main_graph.add_node("feed_generation_module", feed_subgraph.invoke)
+        main_graph.add_node("feed_aggregator", node.aggregate_and_store_feeds)
         
         # Set parallel execution
         main_graph.set_entry_point("official_sources_module")
@@ -109,8 +111,11 @@ class PoliticalGraphBuilder:
         main_graph.add_edge("official_sources_module", "feed_generation_module")
         main_graph.add_edge("social_media_module", "feed_generation_module")
         
-        # Feed generation is the final step
-        main_graph.add_edge("feed_generation_module", END)
+        # Feed generation flows to aggregator
+        main_graph.add_edge("feed_generation_module", "feed_aggregator")
+        
+        # Aggregator is the final step
+        main_graph.add_edge("feed_aggregator", END)
         
         return main_graph.compile()
 
@@ -123,6 +128,7 @@ print("Architecture: 3-Module Hybrid Design")
 print("  Module 1: Official Sources (Gazette + Parliament)")
 print("  Module 2: Social Media (5 platforms × 3 scopes)")
 print("  Module 3: Feed Generation (Categorize + LLM + Format)")
+print("  Module 4: Feed Aggregator (Neo4j + ChromaDB + CSV)")
 print("-"*60)
 
 llm = GroqLLM().get_llm()

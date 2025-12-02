@@ -45,3 +45,7 @@ class PoliticalAgentState(TypedDict, total=False):
     
     # ===== INTEGRATION WITH PARENT GRAPH =====
     domain_insights: List[Dict[str, Any]]
+    
+    # ===== FEED AGGREGATOR =====
+    aggregator_stats: Dict[str, Any]
+    dataset_path: str
