@@ -1,6 +1,6 @@
 """
 src/states/politicalAgentState.py
-Political Agent State - handles government gazette, parliament minutes
+Political Agent State - handles government gazette, parliament minutes, social media
 """
 import operator 
 from typing import Optional, List, Dict, Any
@@ -10,7 +10,7 @@ from typing_extensions import TypedDict, Annotated
 class PoliticalAgentState(TypedDict, total=False):
     """
     State for Political Agent.
-    Monitors regulatory changes, policy updates, government announcements.
+    Monitors regulatory changes, policy updates, government announcements, social media.
     """
     
     # ===== ORCHESTRATOR/WORKER BOOKKEEPING =====
@@ -26,6 +26,18 @@ class PoliticalAgentState(TypedDict, total=False):
     # ===== CHANGE DETECTION =====
     last_alerts_hash: Optional[int]
     change_detected: bool
+    
+    # ===== SOCIAL MEDIA MONITORING =====
+    social_media_results: Annotated[List[Dict[str, Any]], operator.add]
+    
+    # ===== STRUCTURED FEED OUTPUT =====
+    district_feeds: Dict[str, List[Dict[str, Any]]]  # {district: [posts]}
+    national_feed: List[Dict[str, Any]]  # Overall Sri Lanka
+    world_feed: List[Dict[str, Any]]  # World politics affecting SL
+    
+    # ===== LLM PROCESSING =====
+    llm_summary: Optional[str]
+    structured_output: Dict[str, Any]  # Final formatted output
     
     # ===== FEED OUTPUT =====
     final_feed: str

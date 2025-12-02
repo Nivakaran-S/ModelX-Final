@@ -20,6 +20,7 @@ from urllib.parse import quote_plus, urljoin, urlparse
 import yfinance as yf
 import re
 import time
+import random
 
 # Optional Playwright import
 try:
@@ -648,102 +649,95 @@ def scrape_government_gazette_impl(
     max_items: int = 15,
 ) -> List[Dict[str, Any]]:
     """
-    Scrapes gazette.lk for latest gazettes.
-    Goes into each gazette page to retrieve full details and download links.
+    Scrapes gazette.lk for latest government gazettes.
+    Note: keywords parameter is kept for compatibility but ignored.
+    Returns latest gazettes chronologically.
     """
     base_url = "https://www.gazette.lk/government-gazette"
     results: List[Dict[str, Any]] = []
     
-    # 1. Fetch the listing page
-    logger.info(f"[GAZETTE] Fetching listing from {base_url}")
+    logger.info(f"[GAZETTE] Fetching latest gazettes from {base_url}")
     resp = _safe_get(base_url)
     if not resp:
-        return [{"title": "Failed to access gazette.lk", "url": base_url, "timestamp": datetime.utcnow().isoformat()}]
+        return [{
+            "title": "Failed to access gazette.lk",
+            "url": base_url,
+            "error": "Network request failed",
+            "timestamp": datetime.utcnow().isoformat()
+        }]
     
     soup = BeautifulSoup(resp.text, "html.parser")
     
-    # 2. Find articles in the list
+    # Find all gazette article entries
     articles = soup.find_all("article")
     if not articles:
-        articles = soup.select(".post, .type-post, .entry, .news-block")
-        
+        articles = soup.select(".post, .type-post, .entry")
+    
+    logger.info(f"[GAZETTE] Found {len(articles)} potential gazette entries")
+    
     for article in articles:
         if len(results) >= max_items:
             break
-
-        # Extract Title & Link from the listing
+        
+        # Extract title and link
         title_elem = article.find(class_="entry-title") or article.find("h2") or article.find("h3")
         if not title_elem:
             continue
-            
+        
         link_elem = title_elem.find("a", href=True)
         if not link_elem:
             continue
-            
+        
         title = link_elem.get_text(strip=True)
         post_url = link_elem["href"]
         post_url_abs = _make_absolute(post_url, base_url)
         
-        # Keyword filtering on title
-        if not _contains_keyword(title, keywords):
+        # Filter to only include actual gazette entries (not other site content)
+        if "government gazette" not in title.lower():
             continue
         
-        # 3. Deep Scrape: Visit the individual gazette page
-        logger.info(f"[GAZETTE] Deep scraping: {title[:30]}...")
-        time.sleep(0.5) 
+        # Extract date from title if possible
+        date_match = re.search(r'(\d{4}\s+\w+\s+\d{1,2})', title)
+        date_str = date_match.group(1) if date_match else "Unknown date"
         
-        detail_resp = _safe_get(post_url_abs)
-        if not detail_resp:
-            results.append({
-                "title": title,
-                "url": post_url_abs,
-                "note": "Could not fetch details",
-                "timestamp": datetime.utcnow().isoformat()
-            })
-            continue
-
-        # 4. Parse Inner Content
-        detail_soup = BeautifulSoup(detail_resp.text, "html.parser")
-        
-        # Extract Content Text
-        content_div = detail_soup.find(class_="entry-content") or detail_soup.find("article")
-        content_text = content_div.get_text(separator="\n", strip=True) if content_div else ""
-        
-        # Extract Download Links (PDFs)
+        # Look for download links in the article summary
+        entry_content = article.find(class_="entry-content") or article
         download_links = []
-        all_links = content_div.find_all("a", href=True) if content_div else []
         
-        for a in all_links:
-            href = a["href"]
-            text = a.get_text(strip=True).lower()
-            
-            is_pdf = href.lower().endswith(".pdf")
-            is_download_text = any(x in text for x in ["download", "sinhala", "tamil", "english", "gazette"])
-            
-            if is_pdf or is_download_text:
-                download_links.append({
-                    "text": a.get_text(strip=True),
-                    "url": href
-                })
-
-        # 5. Compile Result
+        if entry_content:
+            for link in entry_content.find_all("a", href=True):
+                href = link["href"]
+                link_text = link.get_text(strip=True).lower()
+                
+                # Check if it's a PDF or download link
+                if (".pdf" in href.lower() or 
+                    any(lang in link_text for lang in ["sinhala", "tamil", "english", "download"])):
+                    download_links.append({
+                        "text": link.get_text(strip=True),
+                        "url": _make_absolute(href, base_url)
+                    })
+        
         results.append({
             "title": title,
+            "date": date_str,
             "url": post_url_abs,
-            "description": content_text[:1000] + "..." if len(content_text) > 1000 else content_text,
             "downloads": download_links,
             "timestamp": datetime.utcnow().isoformat(),
         })
-            
+        
+        logger.info(f"[GAZETTE] Added: {title[:50]}...")
+    
     if not results:
         return [{
-            "title": "No gazette entries found matching criteria",
+            "title": "No gazette entries found",
             "url": base_url,
-            "keywords": keywords,
+            "note": "The website structure may have changed",
             "timestamp": datetime.utcnow().isoformat(),
         }]
-        
+    
+    logger.info(f"[GAZETTE] Successfully scraped {len(results)} gazette entries")
     return results
+
 
 
 # ============================================
@@ -1005,511 +999,424 @@ def _simple_parse_posts_from_html(html: str, base_url: str, max_items: int = 10)
 # LANGCHAIN TOOL WRAPPERS
 # ============================================
 
+
+
+def clean_linkedin_text(text):
+    if not text:
+        return ""
+
+    # Remove "…see more" and "See translation"
+    text = re.sub(r"…\s*see more", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"See translation", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b\d+[dwmo]\s*•\s*(Edited)?\s*•?", "", text)
+    text = re.sub(r".+posted this", "", text)
+    text = re.sub(r"\d+[\.,]?\d*\s*reactions", "", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
+
 @tool
 def scrape_linkedin(keywords: Optional[List[str]] = None, max_items: int = 10):
     """
     LinkedIn search using Playwright session.
     Requires environment variables: LINKEDIN_USER, LINKEDIN_PASSWORD (if creating session).
     """
+    ensure_playwright()
+    
+    # 1. Load Session
     site = "linkedin"
-    login_flow = {
-        "login_url": "https://www.linkedin.com/login",
-        "steps": [
-            {"type": "fill", "selector": 'input[name="session_key"]', "value_env": "LINKEDIN_USER"},
-            {"type": "fill", "selector": 'input[name="session_password"]', "value_env": "LINKEDIN_PASSWORD"},
-            {"type": "click", "selector": 'button[type="submit"]'},
-            {"type": "wait", "selector": 'nav', "timeout": 20000}
-        ]
-    }
-    query = "+".join(keywords) if keywords else "Sri+Lanka"
-    url = f"https://www.linkedin.com/search/results/all/?keywords={quote_plus(query)}"
-    try:
-        r = scrape_authenticated_page_via_playwright(site, url, login_flow=login_flow)
-        if "html" in r:
-            items = _simple_parse_posts_from_html(r["html"], "https://www.linkedin.com", max_items=max_items)
-            return json.dumps({"site": "LinkedIn", "results": items, "storage_state": r.get("storage_state")}, default=str)
-        return json.dumps(r, default=str)
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-
-@tool
-def scrape_instagram(keywords: Optional[List[str]] = None, max_items: int = 10):
-    """
-    Instagram scraping via Playwright session. Use IG credentials in env if session needs creating.
-    """
-    site = "instagram"
-    login_flow = {
-        "login_url": "https://www.instagram.com/accounts/login/",
-        "steps": [
-            {"type": "wait", "selector": 'input[name="username"]', "timeout": 20000},
-            {"type": "fill", "selector": 'input[name="username"]', "value_env": "INSTAGRAM_USER"},
-            {"type": "fill", "selector": 'input[name="password"]', "value_env": "INSTAGRAM_PASSWORD"},
-            {"type": "click", "selector": 'button[type="submit"]'},
-            {"type": "wait", "selector": 'nav', "timeout": 20000}
-        ]
-    }
-    q = keywords[0] if keywords else "srilanka"
-    url = f"https://www.instagram.com/explore/tags/{quote_plus(q)}/"
-    try:
-        r = scrape_authenticated_page_via_playwright(site, url, login_flow=login_flow)
-        if "html" in r:
-            items = _simple_parse_posts_from_html(r["html"], "https://www.instagram.com", max_items=max_items)
-            return json.dumps({"site": "Instagram", "results": items, "storage_state": r.get("storage_state")}, default=str)
-        return json.dumps(r, default=str)
-    except Exception as e:
-        return json.dumps({"error": str(e)})
-
-
-
-"""
-COMPLETE FIXED SCRAPERS - Copy these to replace the old ones in utils.py
-Properly extracts content, author, and text from Facebook and Twitter
-"""
-
-def _clean_facebook_text(text: str) -> str:
-    """Remove garbled spacing like 'S p o n s o r e d' -> 'Sponsored'"""
-    # Fix character spacing
-    cleaned = re.sub(r'(\w)-+', r'\1', text)  # Remove dashes between letters
-    cleaned = re.sub(r'(\w)\s+(?=\w\s)', r'\1', cleaned)  # Remove single spaces between letters
-    
-    # Remove excessive whitespace
-    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-    
-    # Remove UI elements
-    ui_patterns = ['Shared with Public', 'Shared with', 'See more', '·']
-    for pattern in ui_patterns:
-        cleaned = cleaned.replace(pattern, '')
-    
-    return cleaned.strip()
-
-
-def _extract_facebook_post_content(container) -> Dict[str, Any]:
-    """
-    Extract structured post data from Facebook article container.
-    Returns: {author, content, url, timestamp}
-    """
-    result = {
-        'author': None,
-        'content': None,
-        'url': None,
-        'timestamp': None
-    }
-    
-    try:
-        # 1. EXTRACT AUTHOR
-        # Look for profile/page links
-        author_links = container.select('a[role="link"]')[:5]
-        for link in author_links:
-            text = link.get_text(strip=True)
-            href = link.get('href', '')
-            # Valid author: not too long, not a hashtag, has profile URL
-            if (8 < len(text) < 100 and 
-                not text.startswith('#') and 
-                ('profile.php' in href or len(href.split('/')) <= 5)):
-                result['author'] = _clean_facebook_text(text)
-                result['url'] = _make_absolute(href, 'https://www.facebook.com')
-                break
-        
-        # 2. EXTRACT CONTENT
-        # Strategy: Find divs with substantial text that aren't navigation
-        all_divs = container.find_all('div', recursive=True)
-        content_candidates = []
-        
-        for div in all_divs:
-            # Get direct text (not nested)
-            div_text = div.get_text(separator=' ', strip=True)
-            
-            # Filter criteria
-            is_substantial = 30 < len(div_text) < 5000
-            not_ui = not any(x in div_text[:50].lower() for x in ['filters', 'search results', 'facebook facebook'])
-            has_words = len(div_text.split()) > 5
-            
-            if is_substantial and not_ui and has_words:
-                content_candidates.append(div_text)
-        
-        # Get the longest candidate as main content
-        if content_candidates:
-            # Remove duplicates and sort by length
-            unique_content = list(set(content_candidates))
-            unique_content.sort(key=len, reverse=True)
-            
-            # Take longest that's not author name
-            for candidate in unique_content:
-                if result['author'] and result['author'] in candidate:
-                    # Remove author name from content
-                    candidate = candidate.replace(result['author'], '').strip()
-                
-                if len(candidate) > 50:
-                    result['content'] = _clean_facebook_text(candidate)
-                    break
-        
-        # 3. EXTRACT POST URL (more specific)
-        post_links = container.find_all('a', href=True)
-        for link in post_links:
-            href = link.get('href', '')
-            # Look for actual post permalinks
-            if any(pattern in href for pattern in ['/posts/', '/photos/', 'story_fbid=', '/videos/']):
-                result['url'] = _make_absolute(href, 'https://www.facebook.com')
-                break
-        
-        # 4. EXTRACT TIMESTAMP
-        time_elements = container.find_all(['abbr', 'time'])
-        for elem in time_elements:
-            timestamp = elem.get_text(strip=True)
-            if timestamp and len(timestamp) < 50:
-                result['timestamp'] = timestamp
-                break
-        
-    except Exception as e:
-        logger.debug(f"[FB_EXTRACT] Error: {e}")
-    
-    return result
-
-
-@tool
-def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
-    """
-    Facebook scraper - extracts author, full content, and metadata.
-    Uses Playwright with existing session.
-    """
-    site = "facebook"
-    
-    # Find session
     session_path = load_playwright_storage_state_path(site, out_dir="src/utils/.sessions")
     if not session_path:
         session_path = load_playwright_storage_state_path(site, out_dir=".sessions")
     
+    # If no session, try to create one
     if not session_path:
-        return json.dumps({
-            "error": "No Facebook session found",
-            "solution": "Run: python src/utils/session_manager.py (option 2)"
-        }, default=str)
-    
-    q = " ".join(keywords) if keywords else "Sri Lanka"
-    url = f"https://www.facebook.com/search/posts/?q={quote_plus(q)}"
-    
+        login_flow = {
+            "login_url": "https://www.linkedin.com/login",
+            "steps": [
+                {"type": "fill", "selector": 'input[name="session_key"]', "value_env": "LINKEDIN_USER"},
+                {"type": "fill", "selector": 'input[name="session_password"]', "value_env": "LINKEDIN_PASSWORD"},
+                {"type": "click", "selector": 'button[type="submit"]'},
+                {"type": "wait", "selector": 'nav', "timeout": 20000}
+            ]
+        }
+        try:
+            session_path = create_or_restore_playwright_session(site, login_flow=login_flow, headless=False)
+        except Exception as e:
+            return json.dumps({"error": f"No session found and failed to create one: {e}"})
+
+    keyword = " ".join(keywords) if keywords else "Sri Lanka"
+    results = []
+
     try:
-        logger.info(f"[FACEBOOK] Searching: {q}")
-        
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)
-            context = browser.new_context(storage_state=session_path)
+            desktop_ua = (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            )
+
+            browser = p.chromium.launch(
+                headless=False,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--start-maximized" 
+                ]
+            )
+            
+            context = browser.new_context(
+                storage_state=session_path,
+                user_agent=desktop_ua,
+                no_viewport=True 
+            )
+            
             page = context.new_page()
+            page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+            url = f"https://www.linkedin.com/search/results/content/?keywords={keyword.replace(' ', '%20')}&origin=GLOBAL_SEARCH_HEADER"
             
             try:
-                page.goto(url, wait_until="domcontentloaded", timeout=60000)
-                
-                # Wait for articles
-                try:
-                    page.wait_for_selector('div[role="article"]', timeout=45000)
-                except:
-                    logger.warning("[FACEBOOK] Posts loading slowly")
-                
-                # Scroll to load content
-                for i in range(8):
-                    page.evaluate("window.scrollBy(0, 1000)")
-                    time.sleep(3)
-                
-                html = page.content()
-                
-                
-            finally:
-                context.close()
-                browser.close()
-        
-        # Parse HTML
-        soup = BeautifulSoup(html, "html.parser")
-        print("SOUP", soup)
-        articles = soup.select('div[role="article"]')
-        
-        
-        logger.info(f"[FACEBOOK] Found {len(articles)} articles")
-        
-        posts = []
-        seen = set()
-        
-        for article in articles:
-            if len(posts) >= max_items:
-                break
-            
-            # Extract structured data
-            post_data = _extract_facebook_post_content(article)
-            
-            # Validate
-            if not post_data['content'] or len(post_data['content']) < 30:
-                continue
-            
-            # Check for duplicates
-            signature = post_data['content'][:100]
-            if signature in seen:
-                continue
-            seen.add(signature)
-            
-            # Build result
-            posts.append({
-                'author': post_data['author'] or 'Unknown',
-                'title': post_data['content'][:100] + '...' if len(post_data['content']) > 100 else post_data['content'],
-                'content': post_data['content'][:800],
-                'url': post_data['url'] or 'https://www.facebook.com',
-                'timestamp': post_data['timestamp'],
-                'source': 'Facebook'
-            })
-        
-        return json.dumps({
-            "site": "Facebook",
-            "query": q,
-            "results": posts,
-            "total_found": len(posts),
-            "fetched_at": datetime.utcnow().isoformat()
-        }, default=str, indent=2)
-        
-    except Exception as e:
-        logger.error(f"[FACEBOOK] {e}")
-        return json.dumps({"error": str(e)}, default=str)
+                logger.info(f"[LINKEDIN] Navigating to {url}")
+                page.goto(url, timeout=60000, wait_until="domcontentloaded")
+            except Exception as e:
+                logger.warning(f"[LINKEDIN] Page load timed out (or other error), attempting to proceed: {e}")
 
+            page.wait_for_timeout(random.randint(4000, 7000))
+
+            try:
+                if page.locator("a[href*='login']").is_visible() or "auth_wall" in page.url:
+                    logger.error("[LINKEDIN] Session invalid. Redirected to login/auth wall.")
+                    return json.dumps({"error": "Session invalid. Please refresh session."})
+            except:
+                pass
+
+            seen = set()
+            no_new_data_count = 0
+            previous_height = 0
+
+            POST_CONTAINER_SELECTOR = "div.feed-shared-update-v2, li.artdeco-card" 
+            TEXT_SELECTOR = "div.update-components-text span.break-words, span.break-words"
+            SEE_MORE_SELECTOR = "button.feed-shared-inline-show-more-text__see-more-less-toggle"
+            POSTER_SELECTOR = "span.update-components-actor__name span[dir='ltr']"
+
+            while len(results) < max_items:
+                try:
+                    see_more_buttons = page.locator(SEE_MORE_SELECTOR).all()
+                    for btn in see_more_buttons:
+                        if btn.is_visible():
+                            try: btn.click(timeout=500)
+                            except: pass
+                except: pass
+
+                if len(results) == 0:
+                    try: page.locator(POST_CONTAINER_SELECTOR).first.wait_for(timeout=5000)
+                    except: logger.warning("[LINKEDIN] No posts found on page yet.")
+
+                posts = page.locator(POST_CONTAINER_SELECTOR).all()
+                
+                for post in posts:
+                    if len(results) >= max_items: break
+                    try:
+                        post.scroll_into_view_if_needed()
+                        raw_text = ""
+                        text_el = post.locator(TEXT_SELECTOR).first
+                        if text_el.is_visible(): raw_text = text_el.inner_text()
+                        else: raw_text = post.locator("div.feed-shared-update-v2__description-wrapper").first.inner_text()
+
+                        cleaned_text = clean_linkedin_text(raw_text)
+                        poster_name = "(Unknown)"
+                        poster_el = post.locator(POSTER_SELECTOR).first
+                        if poster_el.is_visible(): poster_name = poster_el.inner_text().strip()
+                        else:
+                            poster_el = post.locator("span.update-components-actor__title span[dir='ltr']").first
+                            if poster_el.is_visible(): poster_name = poster_el.inner_text().strip()
+
+                        key = f"{poster_name[:20]}::{cleaned_text[:30]}"
+                        if cleaned_text and len(cleaned_text) > 20 and key not in seen:
+                            seen.add(key)
+                            results.append({
+                                "source": "LinkedIn",
+                                "poster": poster_name,
+                                "text": cleaned_text,
+                                "url": "https://www.linkedin.com"
+                            })
+                            logger.info(f"[LINKEDIN] Found post by {poster_name}")
+                    except Exception:
+                        continue
+
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                page.wait_for_timeout(random.randint(2000, 4000))
+
+                new_height = page.evaluate("document.body.scrollHeight")
+                if new_height == previous_height:
+                    no_new_data_count += 1
+                    if no_new_data_count > 3:
+                        logger.info("[LINKEDIN] End of feed or stuck.")
+                        break
+                else:
+                    no_new_data_count = 0
+                    previous_height = new_height
+
+            browser.close()
+            return json.dumps({"site": "LinkedIn", "results": results, "storage_state": session_path}, default=str)
+
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+# =====================================================
+# 🔧 TWITTER UTILITY FUNCTIONS
+# =====================================================
+
+def clean_twitter_text(text):
+    """Clean and normalize tweet text"""
+    if not text:
+        return ""
+    
+    # Remove common Twitter artifacts
+    text = re.sub(r"Show more", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"https://t\.co/\w+", "", text)  # Remove t.co links
+    text = re.sub(r"pic\.twitter\.com/\w+", "", text)  # Remove pic.twitter.com links
+    text = re.sub(r"\s+", " ", text)  # Normalize whitespace
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+    
+    return text.strip()
+
+def extract_twitter_timestamp(tweet_element):
+    """Extract timestamp from tweet element"""
+    try:
+        timestamp_selectors = [
+            "time",
+            "[datetime]",
+            "a[href*='/status/'] time",
+            "div[data-testid='User-Name'] a[href*='/status/']"
+        ]
+        
+        for selector in timestamp_selectors:
+            if tweet_element.locator(selector).count() > 0:
+                time_element = tweet_element.locator(selector).first
+                datetime_attr = time_element.get_attribute("datetime")
+                if datetime_attr:
+                    return datetime_attr
+                time_text = time_element.inner_text()
+                if time_text:
+                    return time_text
+    except:
+        pass
+    return "Unknown"
 
 
 
 @tool
 def scrape_twitter(query: str = "Sri Lanka", max_items: int = 20):
     """
-    Twitter scraper - extracts actual tweet text, author, and metadata.
-    Multi-strategy: Playwright session → Nitter fallback
+    Twitter scraper - extracts actual tweet text, author, and metadata using Playwright session.
+    Requires a valid Twitter session file (twitter_storage_state.json or tw_state.json).
     """
+    ensure_playwright()
     
-    # STRATEGY 1: Authenticated Playwright Session
-    session_path = load_playwright_storage_state_path("twitter", out_dir="src/utils/.sessions")
+    # Load Session
+    site = "twitter"
+    session_path = load_playwright_storage_state_path(site, out_dir="src/utils/.sessions")
     if not session_path:
-        session_path = load_playwright_storage_state_path("twitter", out_dir=".sessions")
+        session_path = load_playwright_storage_state_path(site, out_dir=".sessions")
     
-    if session_path and PLAYWRIGHT_AVAILABLE:
-        try:
-            logger.info(f"[TWITTER] Using authenticated session for: {query}")
+    # Check for alternative session file name
+    if not session_path:
+        alt_paths = [
+            os.path.join(os.getcwd(), "src", "utils", ".sessions", "tw_state.json"),
+            os.path.join(os.getcwd(), ".sessions", "tw_state.json"),
+            os.path.join(os.getcwd(), "tw_state.json")
+        ]
+        for path in alt_paths:
+            if os.path.exists(path):
+                session_path = path
+                logger.info(f"[TWITTER] Found session at {path}")
+                break
+    
+    if not session_path:
+        return json.dumps({
+            "error": "No Twitter session found",
+            "solution": "Run the Twitter session manager to create a session"
+        }, default=str)
+    
+    results = []
+    
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=False,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                ]
+            )
             
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=False)
-                context = browser.new_context(storage_state=session_path)
-                page = context.new_page()
-                
+            context = browser.new_context(
+                storage_state=session_path,
+                viewport={"width": 1280, "height": 720},
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+            
+            context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                window.chrome = {runtime: {}};
+            """)
+            
+            page = context.new_page()
+            
+            # Try different search URLs
+            search_urls = [
+                f"https://x.com/search?q={quote_plus(query)}&src=typed_query&f=live",
+                f"https://x.com/search?q={quote_plus(query)}&src=typed_query",
+                f"https://x.com/search?q={quote_plus(query)}",
+            ]
+            
+            success = False
+            for url in search_urls:
                 try:
-                    search_url = f"https://x.com/search?q={quote_plus(query)}&src=typed_query&f=live"
-                    page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
+                    logger.info(f"[TWITTER] Trying {url}")
+                    page.goto(url, timeout=60000, wait_until="domcontentloaded")
+                    time.sleep(5)
+                    
+                    # Handle popups
+                    popup_selectors = [
+                        "[data-testid='app-bar-close']",
+                        "[aria-label='Close']",
+                        "button:has-text('Not now')",
+                    ]
+                    for selector in popup_selectors:
+                        try:
+                            if page.locator(selector).count() > 0 and page.locator(selector).first.is_visible():
+                                page.locator(selector).first.click()
+                                time.sleep(1)
+                        except:
+                            pass
                     
                     # Wait for tweets
                     try:
-                        page.wait_for_selector('article', timeout=12000)
+                        page.wait_for_selector("article[data-testid='tweet']", timeout=15000)
+                        logger.info("[TWITTER] Tweets found!")
+                        success = True
+                        break
                     except:
-                        logger.warning("[TWITTER] Tweets loading slowly")
-                    
-                    # Scroll to load more
-                    for i in range(4):
-                        page.evaluate("window.scrollBy(0, 1200)")
-                        time.sleep(1.5)
-                    
-                    html = page.content()
-                    
-                    # Save HTML for debugging (optional)
-                    # with open('twitter_debug.html', 'w', encoding='utf-8') as f:
-                    #     f.write(html)
-                    
-                finally:
-                    context.close()
-                    browser.close()
+                        logger.warning("[TWITTER] No tweets found, trying next URL...")
+                        continue
+                except Exception as e:
+                    logger.error(f"[TWITTER] Navigation failed: {e}")
+                    continue
             
-            # Parse tweets
-            soup = BeautifulSoup(html, "html.parser")
-            articles = soup.find_all('article')
+            if not success or "login" in page.url:
+                logger.error("[TWITTER] Could not load tweets or session expired")
+                return json.dumps({"error": "Session invalid or tweets not found"}, default=str)
             
-            logger.info(f"[TWITTER] Found {len(articles)} article elements")
-            
-            tweets = []
+            # Scraping
             seen = set()
+            scroll_attempts = 0
+            max_scroll_attempts = 15
             
-            for article in articles:
-                try:
-                    # EXTRACT TWEET TEXT
-                    # Method 1: data-testid="tweetText"
-                    tweet_text = None
-                    text_div = article.find('div', attrs={'data-testid': 'tweetText'})
-                    
-                    if text_div:
-                        tweet_text = text_div.get_text(separator=' ', strip=True)
-                    
-                    # Method 2: Look for lang attribute (tweet language)
-                    if not tweet_text:
-                        lang_divs = article.find_all('div', attrs={'lang': True})
-                        for div in lang_divs:
-                            text = div.get_text(separator=' ', strip=True)
-                            if 20 < len(text) < 1000:  # Valid tweet length
-                                tweet_text = text
-                                break
-                    
-                    # Method 3: Get all spans and reconstruct
-                    if not tweet_text:
-                        all_spans = article.find_all('span')
-                        text_parts = [s.get_text(strip=True) for s in all_spans if len(s.get_text(strip=True)) > 5]
-                        combined = ' '.join(text_parts)
-                        if 20 < len(combined) < 1000:
-                            tweet_text = combined
-                    
-                    if not tweet_text or len(tweet_text) < 15:
-                        continue
-                    
-                    # Check for duplicates
-                    if tweet_text in seen:
-                        continue
-                    seen.add(tweet_text)
-                    
-                    # EXTRACT AUTHOR
-                    author = "Unknown"
-                    # Look for username with @ symbol
-                    username_elem = article.find(string=re.compile(r'@\w+'))
-                    if username_elem:
-                        author = username_elem.strip()
-                    else:
-                        # Alternative: look for aria-label with author info
-                        author_link = article.find('a', href=re.compile(r'/\w+$'))
-                        if author_link:
-                            author = '@' + author_link.get('href', '').strip('/').split('/')[-1]
-                    
-                    # EXTRACT TIMESTAMP
-                    timestamp = None
-                    time_elem = article.find('time')
-                    if time_elem:
-                        timestamp = time_elem.get('datetime', time_elem.get_text(strip=True))
-                    
-                    # EXTRACT URL
-                    url = None
-                    status_links = article.find_all('a', href=re.compile(r'/status/\d+'))
-                    if status_links:
-                        href = status_links[0].get('href', '')
-                        url = f"https://x.com{href}" if href.startswith('/') else href
-                    
-                    tweets.append({
-                        'text': tweet_text[:500],
-                        'author': author,
-                        'timestamp': timestamp,
-                        'url': url or 'https://x.com',
-                        'source': 'Twitter (authenticated)'
-                    })
-                    
-                    if len(tweets) >= max_items:
-                        break
-                    
-                except Exception as e:
-                    logger.debug(f"[TWITTER] Error parsing tweet: {e}")
-                    continue
+            TWEET_SELECTOR = "article[data-testid='tweet']"
+            TEXT_SELECTOR = "div[data-testid='tweetText']"
+            USER_SELECTOR = "div[data-testid='User-Name']"
             
-            if tweets:
-                return json.dumps({
-                    "source": "twitter_authenticated",
-                    "query": query,
-                    "results": tweets,
-                    "total_found": len(tweets),
-                    "fetched_at": datetime.utcnow().isoformat()
-                }, default=str, indent=2)
-            else:
-                logger.warning("[TWITTER] No tweets extracted, trying Nitter fallback")
-        
-        except Exception as e:
-            logger.warning(f"[TWITTER] Playwright failed: {e}")
-    
-    # STRATEGY 2: Nitter Fallback
-    logger.info("[TWITTER] Attempting Nitter instances")
-    
-    nitter_instances = [
-        "https://nitter.poast.org",
-        "https://nitter.net",
-        "https://nitter.privacydev.net",
-    ]
-    
-    for instance in nitter_instances:
-        try:
-            search_url = f"{instance}/search?f=tweets&q={quote_plus(query)}"
-            
-            resp = requests.get(
-                search_url,
-                headers=DEFAULT_HEADERS,
-                timeout=10
-            )
-            
-            if resp.status_code != 200:
-                continue
-            
-            soup = BeautifulSoup(resp.text, "html.parser")
-            timeline_items = soup.select('.timeline-item')
-            
-            if not timeline_items:
-                continue
-            
-            tweets = []
-            
-            for item in timeline_items:
-                try:
-                    content_div = item.select_one('.tweet-content')
-                    if not content_div:
-                        continue
-                    
-                    text = content_div.get_text(separator=' ', strip=True)
-                    if len(text) < 15:
-                        continue
-                    
-                    author_elem = item.select_one('.username')
-                    author = author_elem.get_text(strip=True) if author_elem else "Unknown"
-                    
-                    time_elem = item.select_one('.tweet-date a')
-                    timestamp = time_elem.get('title') if time_elem else None
-                    
-                    link_elem = item.select_one('.tweet-link')
-                    url = _make_absolute(link_elem.get('href', ''), instance) if link_elem else instance
-                    
-                    tweets.append({
-                        'text': text[:500],
-                        'author': author,
-                        'timestamp': timestamp,
-                        'url': url,
-                        'source': f'Nitter'
-                    })
-                    
-                    if len(tweets) >= max_items:
-                        break
+            while len(results) < max_items and scroll_attempts < max_scroll_attempts:
+                scroll_attempts += 1
                 
-                except Exception as e:
-                    continue
+                # Expand "Show more" buttons
+                try:
+                    show_more_buttons = page.locator("[data-testid='tweet-text-show-more-link']").all()
+                    for button in show_more_buttons:
+                        if button.is_visible():
+                            try:
+                                button.click()
+                                time.sleep(0.3)
+                            except:
+                                pass
+                except:
+                    pass
+                
+                # Collect tweets
+                tweets = page.locator(TWEET_SELECTOR).all()
+                new_tweets_found = 0
+                
+                for tweet in tweets:
+                    if len(results) >= max_items:
+                        break
+                    
+                    try:
+                        tweet.scroll_into_view_if_needed()
+                        time.sleep(0.1)
+                        
+                        # Skip promoted tweets
+                        if (tweet.locator("span:has-text('Promoted')").count() > 0 or 
+                            tweet.locator("span:has-text('Ad')").count() > 0):
+                            continue
+                        
+                        # Extract text
+                        text_content = ""
+                        text_element = tweet.locator(TEXT_SELECTOR).first
+                        if text_element.count() > 0:
+                            text_content = text_element.inner_text()
+                        
+                        cleaned_text = clean_twitter_text(text_content)
+                        
+                        # Extract user
+                        user_info = "Unknown"
+                        user_element = tweet.locator(USER_SELECTOR).first
+                        if user_element.count() > 0:
+                            user_text = user_element.inner_text()
+                            user_info = user_text.split('\n')[0].strip()
+                        
+                        # Extract timestamp
+                        timestamp = extract_twitter_timestamp(tweet)
+                        
+                        # Deduplication
+                        text_key = cleaned_text[:50] if cleaned_text else ""
+                        unique_key = f"{user_info}_{text_key}"
+                        
+                        if (cleaned_text and len(cleaned_text) > 20 and 
+                            unique_key not in seen and 
+                            not any(word in cleaned_text.lower() for word in ["promoted", "advertisement"])):
+                            
+                            seen.add(unique_key)
+                            results.append({
+                                "source": "Twitter",
+                                "poster": user_info,
+                                "text": cleaned_text,
+                                "timestamp": timestamp,
+                                "url": "https://x.com"
+                            })
+                            new_tweets_found += 1
+                            logger.info(f"[TWITTER] Collected tweet {len(results)}/{max_items}")
+                    
+                    except Exception:
+                        continue
+                
+                # Scroll down
+                if len(results) < max_items:
+                    page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+                    time.sleep(random.uniform(2, 3))
+                    
+                    if new_tweets_found == 0:
+                        scroll_attempts += 1
+                    else:
+                        scroll_attempts = 0
             
-            if tweets:
-                return json.dumps({
-                    "source": f"nitter_{urlparse(instance).netloc}",
-                    "query": query,
-                    "results": tweets,
-                    "total_found": len(tweets),
-                    "fetched_at": datetime.utcnow().isoformat()
-                }, default=str, indent=2)
-        
-        except Exception as e:
-            logger.debug(f"[TWITTER] {instance} failed: {e}")
-            continue
+            browser.close()
+            
+            return json.dumps({
+                "source": "Twitter",
+                "query": query,
+                "results": results,
+                "total_found": len(results),
+                "fetched_at": datetime.utcnow().isoformat()
+            }, default=str, indent=2)
     
-    return json.dumps({
-        "error": "Could not fetch tweets from any source",
-        "query": query,
-        "attempted": ["authenticated_session", "nitter_instances"],
-        "suggestion": "Check if session is expired: python validate_sessions.py"
-    }, default=str)
-
-@tool
-def scrape_reddit(keywords: List[str], limit: int = 20, subreddit: Optional[str] = None):
-    """
-    Scrape Reddit for posts matching specific keywords.
-    Optionally restrict to a specific subreddit.
-    """
-    data = scrape_reddit_impl(keywords=keywords, limit=limit, subreddit=subreddit)
-    return json.dumps(data, default=str)
+    except Exception as e:
+        logger.error(f"[TWITTER] {e}")
+        return json.dumps({"error": str(e)}, default=str)
 
 
-# @tool
-# def scrape_twitter(query: str = "Sri Lanka", use_playwright: bool = True, storage_state_site: Optional[str] = "twitter"):
 #     """
 #     Twitter trending/search wrapper. For trending, call scrape_twitter_trending_srilanka().
 #     For search, this will attempt Playwright fetch if available, else Nitter fallback.
@@ -1549,6 +1456,391 @@ def scrape_reddit(keywords: List[str], limit: int = 20, subreddit: Optional[str]
 #         return json.dumps({"error": str(e)})
 
 
+
+def clean_linkedin_text(text):
+    if not text:
+        return ""
+
+    # Remove "…see more" and "See translation"
+    text = re.sub(r"…\s*see more", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"See translation", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b\d+[dwmo]\s*•\s*(Edited)?\s*•?", "", text)
+    text = re.sub(r".+posted this", "", text)
+    text = re.sub(r"\d+[\.,]?\d*\s*reactions", "", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
+
+
+# =====================================================
+# FACEBOOK & INSTAGRAM UTILITY FUNCTIONS
+# =====================================================
+
+def clean_fb_text(text):
+    """Clean Facebook noisy text"""
+    if not text:
+        return ""
+
+    text = re.sub(r"\b(?:[a-zA-Z]\s+){4,}\b", "", text)
+    text = re.sub(r"(Facebook\s*){2,}", "", text)
+    text = re.sub(r"Like\s*Comment\s*Share", "", text)
+    text = re.sub(r"All reactions:\s*\d+\s*", "", text)
+    text = re.sub(r"\n\d+\n", "\n", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
+
+
+def extract_media_id_instagram(page):
+    """Extract Instagram media ID"""
+    html = page.content()
+    match = re.search(r'"media_id":"(\d+)"', html)
+    if match:
+        return match.group(1)
+    match = re.search(r'"id":"(\d+_\d+)"', html)
+    if match:
+        return match.group(1)
+    return None
+
+
+def fetch_caption_via_private_api(page, media_id):
+    """Instagram Private API Caption fetch"""
+    if not media_id:
+        return None
+
+    api_url = f"https://i.instagram.com/api/v1/media/{media_id}/info/"
+
+    try:
+        response = page.request.get(
+            api_url,
+            headers={
+                "User-Agent": (
+                    "Instagram 290.0.0.0.66 (iPhone14,5; iOS 17_0; en_US) "
+                    "AppleWebKit/605.1.15"
+                ),
+                "X-IG-App-ID": "936619743392459",
+            },
+            timeout=20000,
+        )
+        if response.status != 200:
+            return None
+
+        data = response.json()
+        if "items" in data and data["items"]:
+            return data["items"][0].get("caption", {}).get("text")
+    except:
+        pass
+
+    return None
+
+
+@tool
+def scrape_instagram(keywords: Optional[List[str]] = None, max_items: int = 15):
+    """
+    Instagram scraper using Playwright session.
+    Scrapes posts from hashtag search and extracts captions.
+    """
+    ensure_playwright()
+    
+    # Load Session
+    site = "instagram"
+    session_path = load_playwright_storage_state_path(site, out_dir="src/utils/.sessions")
+    if not session_path:
+        session_path = load_playwright_storage_state_path(site, out_dir=".sessions")
+    
+    # Check for alternative session file name
+    if not session_path:
+        alt_paths = [
+            os.path.join(os.getcwd(), "src", "utils", ".sessions", "ig_state.json"),
+            os.path.join(os.getcwd(), ".sessions", "ig_state.json"),
+            os.path.join(os.getcwd(), "ig_state.json")
+        ]
+        for path in alt_paths:
+            if os.path.exists(path):
+                session_path = path
+                logger.info(f"[INSTAGRAM] Found session at {path}")
+                break
+    
+    if not session_path:
+        return json.dumps({
+            "error": "No Instagram session found",
+            "solution": "Run the Instagram session manager to create a session"
+        }, default=str)
+    
+    keyword = " ".join(keywords) if keywords else "srilanka"
+    keyword = keyword.replace(" ", "")  # Instagram hashtags don't have spaces
+    results = []
+    
+    try:
+        with sync_playwright() as p:
+            instagram_mobile_ua = (
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+            )
+            
+            browser = p.chromium.launch(headless=False)
+            
+            context = browser.new_context(
+                storage_state=session_path,
+                user_agent=instagram_mobile_ua,
+                viewport={"width": 430, "height": 932},
+            )
+            
+            page = context.new_page()
+            url = f"https://www.instagram.com/explore/tags/{keyword}/"
+            
+            logger.info(f"[INSTAGRAM] Navigating to {url}")
+            page.goto(url, timeout=120000)
+            page.wait_for_timeout(4000)
+            
+            # Scroll to load posts
+            for _ in range(12):
+                page.mouse.wheel(0, 2500)
+                page.wait_for_timeout(1500)
+            
+            # Collect post links
+            anchors = page.locator("a[href*='/p/'], a[href*='/reel/']").all()
+            links = []
+            
+            for a in anchors:
+                href = a.get_attribute("href")
+                if href:
+                    full = "https://www.instagram.com" + href
+                    links.append(full)
+                if len(links) >= max_items:
+                    break
+            
+            logger.info(f"[INSTAGRAM] Found {len(links)} posts")
+            
+            # Extract captions from each post
+            for link in links:
+                logger.info(f"[INSTAGRAM] Scraping {link}")
+                page.goto(link, timeout=120000)
+                page.wait_for_timeout(2000)
+                
+                media_id = extract_media_id_instagram(page)
+                caption = fetch_caption_via_private_api(page, media_id)
+                
+                # Fallback to direct extraction
+                if not caption:
+                    try:
+                        caption = page.locator("article h1, article span").first.inner_text().strip()
+                    except:
+                        caption = None
+                
+                if caption:
+                    results.append({
+                        "source": "Instagram",
+                        "text": caption,
+                        "url": link,
+                        "poster": "(Instagram User)"
+                    })
+                    logger.info(f"[INSTAGRAM] Collected caption {len(results)}/{max_items}")
+            
+            browser.close()
+            
+            return json.dumps({
+                "site": "Instagram",
+                "results": results,
+                "storage_state": session_path
+            }, default=str)
+    
+    except Exception as e:
+        logger.error(f"[INSTAGRAM] {e}")
+        return json.dumps({"error": str(e)}, default=str)
+
+
+@tool
+def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
+    """
+    Facebook scraper using Playwright session (Desktop).
+    Extracts posts from keyword search with poster names and text.
+    """
+    ensure_playwright()
+    
+    # Load Session
+    site = "facebook"
+    session_path = load_playwright_storage_state_path(site, out_dir="src/utils/.sessions")
+    if not session_path:
+        session_path = load_playwright_storage_state_path(site, out_dir=".sessions")
+    
+    # Check for alternative session file name
+    if not session_path:
+        alt_paths = [
+            os.path.join(os.getcwd(), "src", "utils", ".sessions", "fb_state.json"),
+            os.path.join(os.getcwd(), ".sessions", "fb_state.json"),
+            os.path.join(os.getcwd(), "fb_state.json")
+        ]
+        for path in alt_paths:
+            if os.path.exists(path):
+                session_path = path
+                logger.info(f"[FACEBOOK] Found session at {path}")
+                break
+    
+    if not session_path:
+        return json.dumps({
+            "error": "No Facebook session found",
+            "solution": "Run the Facebook session manager to create a session"
+        }, default=str)
+    
+    keyword = " ".join(keywords) if keywords else "Sri Lanka"
+    results = []
+    
+    try:
+        with sync_playwright() as p:
+            facebook_desktop_ua = (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+            
+            browser = p.chromium.launch(headless=False)
+            
+            context = browser.new_context(
+                storage_state=session_path,
+                user_agent=facebook_desktop_ua,
+                viewport={"width": 1400, "height": 900},
+            )
+            
+            page = context.new_page()
+            search_url = f"https://www.facebook.com/search/posts?q={keyword.replace(' ', '%20')}"
+            
+            logger.info(f"[FACEBOOK] Navigating to {search_url}")
+            page.goto(search_url, timeout=120000)
+            time.sleep(5)
+            
+            seen = set()
+            stuck = 0
+            last_scroll = 0
+            
+            MESSAGE_SELECTOR = "div[data-ad-preview='message']"
+            
+            # Poster selectors
+            POSTER_SELECTORS = [
+                "h3 strong a span",
+                "h3 strong span",
+                "h3 a span",
+                "strong a span",
+                "a[role='link'] span:not([class*='timestamp'])",
+                "span.fwb a",
+                "span.fwb",
+                "a[aria-hidden='false'] span",
+                "a[role='link'] span",
+            ]
+            
+            def extract_poster(post):
+                """Extract poster name from Facebook post"""
+                parent = post.locator("xpath=ancestor::div[contains(@class, 'x1yztbdb')][1]")
+                
+                for selector in POSTER_SELECTORS:
+                    try:
+                        el = parent.locator(selector).first
+                        if el and el.count() > 0:
+                            name = el.inner_text().strip()
+                            if name and name != "Facebook" and len(name) > 1:
+                                return name
+                    except:
+                        pass
+                
+                return "(Unknown)"
+            
+            while len(results) < max_items:
+                posts = page.locator(MESSAGE_SELECTOR).all()
+                
+                for post in posts:
+                    try:
+                        # EXPAND "See more" button to get full text
+                        try:
+                            # Scroll post into view first
+                            post.scroll_into_view_if_needed()
+                            time.sleep(0.5)
+                            
+                            # Try to find and click "See more" button
+                            # Use more specific selectors and wait for expansion
+                            see_more_selectors = [
+                                "div[role='button']:has-text('See more')",
+                                "div[role='button']:has-text('… See more')",
+                                "div[role='button'] >> text='See more'",
+                                "div:has-text('See more'):has(div[role='button'])",
+                            ]
+                            
+                            expanded = False
+                            for selector in see_more_selectors:
+                                try:
+                                    buttons = post.locator(selector)
+                                    count = buttons.count()
+                                    
+                                    for i in range(count):
+                                        btn = buttons.nth(i)
+                                        if btn.is_visible(timeout=1000):
+                                            # Click and wait for content to expand
+                                            btn.click()
+                                            # Wait longer for DOM to update
+                                            time.sleep(1.5)
+                                            expanded = True
+                                            logger.info("[FACEBOOK] Clicked 'See more', waiting for expansion...")
+                                            break
+                                    
+                                    if expanded:
+                                        break
+                                except Exception as e:
+                                    continue
+                            
+                            if expanded:
+                                # Give extra time for expansion to complete
+                                time.sleep(0.5)
+                                logger.info("[FACEBOOK] Content expanded")
+                        except Exception as e:
+                            logger.debug(f"[FACEBOOK] Expansion error: {e}")
+                            pass
+                        
+                        raw = post.inner_text().strip()
+                        cleaned = clean_fb_text(raw)
+                        
+                        poster = extract_poster(post)
+                        
+                        if cleaned and len(cleaned) > 30:
+                            key = poster + "::" + cleaned
+                            if key not in seen:
+                                seen.add(key)
+                                results.append({
+                                    "source": "Facebook",
+                                    "poster": poster,
+                                    "text": cleaned,
+                                    "url": "https://www.facebook.com"
+                                })
+                                logger.info(f"[FACEBOOK] Collected post {len(results)}/{max_items}")
+                        
+                        if len(results) >= max_items:
+                            break
+                    
+                    except:
+                        pass
+                
+                # Scroll
+                page.evaluate("window.scrollBy(0, 2300)")
+                time.sleep(1.2)
+                
+                new_scroll = page.evaluate("window.scrollY")
+                stuck = stuck + 1 if new_scroll == last_scroll else 0
+                last_scroll = new_scroll
+                
+                if stuck >= 3:
+                    logger.info("[FACEBOOK] Reached end of results")
+                    break
+            
+            browser.close()
+            
+            return json.dumps({
+                "site": "Facebook",
+                "results": results[:max_items],
+                "storage_state": session_path
+            }, default=str)
+    
+    except Exception as e:
+        logger.error(f"[FACEBOOK] {e}")
+        return json.dumps({"error": str(e)}, default=str)
+
+
 @tool
 def scrape_government_gazette(keywords: Optional[List[str]] = None, max_items: int = 15):
     """
@@ -1559,6 +1851,21 @@ def scrape_government_gazette(keywords: Optional[List[str]] = None, max_items: i
     return json.dumps(data, default=str)
 
 
+
+def clean_linkedin_text(text):
+    if not text:
+        return ""
+
+    # Remove "…see more" and "See translation"
+    text = re.sub(r"…\s*see more", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"See translation", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b\d+[dwmo]\s*•\s*(Edited)?\s*•?", "", text)
+    text = re.sub(r".+posted this", "", text)
+    text = re.sub(r"\d+[\.,]?\d*\s*reactions", "", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
+
 @tool
 def scrape_parliament_minutes(keywords: Optional[List[str]] = None, max_items: int = 20):
     """
@@ -1568,6 +1875,21 @@ def scrape_parliament_minutes(keywords: Optional[List[str]] = None, max_items: i
     return json.dumps(data, default=str)
 
 
+
+def clean_linkedin_text(text):
+    if not text:
+        return ""
+
+    # Remove "…see more" and "See translation"
+    text = re.sub(r"…\s*see more", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"See translation", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b\d+[dwmo]\s*•\s*(Edited)?\s*•?", "", text)
+    text = re.sub(r".+posted this", "", text)
+    text = re.sub(r"\d+[\.,]?\d*\s*reactions", "", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
+
 @tool
 def scrape_train_schedule(from_station: Optional[str] = None, to_station: Optional[str] = None, keyword: Optional[str] = None, max_items: int = 30):
     """
@@ -1576,6 +1898,21 @@ def scrape_train_schedule(from_station: Optional[str] = None, to_station: Option
     data = scrape_train_schedule_impl(from_station=from_station, to_station=to_station, keyword=keyword, max_items=max_items)
     return json.dumps(data, default=str)
 
+
+
+def clean_linkedin_text(text):
+    if not text:
+        return ""
+
+    # Remove "…see more" and "See translation"
+    text = re.sub(r"…\s*see more", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"See translation", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b\d+[dwmo]\s*•\s*(Edited)?\s*•?", "", text)
+    text = re.sub(r".+posted this", "", text)
+    text = re.sub(r"\d+[\.,]?\d*\s*reactions", "", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
 
 @tool
 def scrape_cse_stock_data(symbol: str = "ASPI", period: str = "1d", interval: str = "1h"):
@@ -1587,6 +1924,21 @@ def scrape_cse_stock_data(symbol: str = "ASPI", period: str = "1d", interval: st
     return json.dumps(data, default=str)
 
 
+
+def clean_linkedin_text(text):
+    if not text:
+        return ""
+
+    # Remove "…see more" and "See translation"
+    text = re.sub(r"…\s*see more", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"See translation", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b\d+[dwmo]\s*•\s*(Edited)?\s*•?", "", text)
+    text = re.sub(r".+posted this", "", text)
+    text = re.sub(r"\d+[\.,]?\d*\s*reactions", "", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
+
 @tool
 def scrape_local_news(keywords: Optional[List[str]] = None, max_articles: int = 30):
     """
@@ -1596,12 +1948,363 @@ def scrape_local_news(keywords: Optional[List[str]] = None, max_articles: int = 
     return json.dumps(data, default=str)
 
 
+
+def clean_linkedin_text(text):
+    if not text:
+        return ""
+
+    # Remove "…see more" and "See translation"
+    text = re.sub(r"…\s*see more", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"See translation", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b\d+[dwmo]\s*•\s*(Edited)?\s*•?", "", text)
+    text = re.sub(r".+posted this", "", text)
+    text = re.sub(r"\d+[\.,]?\d*\s*reactions", "", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
+
 @tool
 def think_tool(reflection: str) -> str:
     """
     Log a thought or reflection from the agent. Useful for debugging or tracing the agent's reasoning.
     """
     return f"Reflection recorded: {reflection}"
+
+
+
+# =====================================================
+# FACEBOOK & INSTAGRAM UTILITY FUNCTIONS
+# =====================================================
+
+def clean_fb_text(text):
+    """Clean Facebook noisy text"""
+    if not text:
+        return ""
+
+    text = re.sub(r"\b(?:[a-zA-Z]\s+){4,}\b", "", text)
+    text = re.sub(r"(Facebook\s*){2,}", "", text)
+    text = re.sub(r"Like\s*Comment\s*Share", "", text)
+    text = re.sub(r"All reactions:\s*\d+\s*", "", text)
+    text = re.sub(r"\n\d+\n", "\n", text)
+    text = "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+
+    return text.strip()
+
+
+def extract_media_id_instagram(page):
+    """Extract Instagram media ID"""
+    html = page.content()
+    match = re.search(r'"media_id":"(\d+)"', html)
+    if match:
+        return match.group(1)
+    match = re.search(r'"id":"(\d+_\d+)"', html)
+    if match:
+        return match.group(1)
+    return None
+
+
+def fetch_caption_via_private_api(page, media_id):
+    """Instagram Private API Caption fetch"""
+    if not media_id:
+        return None
+
+    api_url = f"https://i.instagram.com/api/v1/media/{media_id}/info/"
+
+    try:
+        response = page.request.get(
+            api_url,
+            headers={
+                "User-Agent": (
+                    "Instagram 290.0.0.0.66 (iPhone14,5; iOS 17_0; en_US) "
+                    "AppleWebKit/605.1.15"
+                ),
+                "X-IG-App-ID": "936619743392459",
+            },
+            timeout=20000,
+        )
+        if response.status != 200:
+            return None
+
+        data = response.json()
+        if "items" in data and data["items"]:
+            return data["items"][0].get("caption", {}).get("text")
+    except:
+        pass
+
+    return None
+
+
+@tool
+def scrape_instagram(keywords: Optional[List[str]] = None, max_items: int = 15):
+    """
+    Instagram scraper using Playwright session.
+    Scrapes posts from hashtag search and extracts captions.
+    """
+    ensure_playwright()
+    
+    # Load Session
+    site = "instagram"
+    session_path = load_playwright_storage_state_path(site, out_dir="src/utils/.sessions")
+    if not session_path:
+        session_path = load_playwright_storage_state_path(site, out_dir=".sessions")
+    
+    # Check for alternative session file name
+    if not session_path:
+        alt_paths = [
+            os.path.join(os.getcwd(), "src", "utils", ".sessions", "ig_state.json"),
+            os.path.join(os.getcwd(), ".sessions", "ig_state.json"),
+            os.path.join(os.getcwd(), "ig_state.json")
+        ]
+        for path in alt_paths:
+            if os.path.exists(path):
+                session_path = path
+                logger.info(f"[INSTAGRAM] Found session at {path}")
+                break
+    
+    if not session_path:
+        return json.dumps({
+            "error": "No Instagram session found",
+            "solution": "Run the Instagram session manager to create a session"
+        }, default=str)
+    
+    keyword = " ".join(keywords) if keywords else "srilanka"
+    keyword = keyword.replace(" ", "")  # Instagram hashtags don't have spaces
+    results = []
+    
+    try:
+        with sync_playwright() as p:
+            instagram_mobile_ua = (
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+            )
+            
+            browser = p.chromium.launch(headless=False)
+            
+            context = browser.new_context(
+                storage_state=session_path,
+                user_agent=instagram_mobile_ua,
+                viewport={"width": 430, "height": 932},
+            )
+            
+            page = context.new_page()
+            url = f"https://www.instagram.com/explore/tags/{keyword}/"
+            
+            logger.info(f"[INSTAGRAM] Navigating to {url}")
+            page.goto(url, timeout=120000)
+            page.wait_for_timeout(4000)
+            
+            # Scroll to load posts
+            for _ in range(12):
+                page.mouse.wheel(0, 2500)
+                page.wait_for_timeout(1500)
+            
+            # Collect post links
+            anchors = page.locator("a[href*='/p/'], a[href*='/reel/']").all()
+            links = []
+            
+            for a in anchors:
+                href = a.get_attribute("href")
+                if href:
+                    full = "https://www.instagram.com" + href
+                    links.append(full)
+                if len(links) >= max_items:
+                    break
+            
+            logger.info(f"[INSTAGRAM] Found {len(links)} posts")
+            
+            # Extract captions from each post
+            for link in links:
+                logger.info(f"[INSTAGRAM] Scraping {link}")
+                page.goto(link, timeout=120000)
+                page.wait_for_timeout(2000)
+                
+                media_id = extract_media_id_instagram(page)
+                caption = fetch_caption_via_private_api(page, media_id)
+                
+                # Fallback to direct extraction
+                if not caption:
+                    try:
+                        caption = page.locator("article h1, article span").first.inner_text().strip()
+                    except:
+                        caption = None
+                
+                if caption:
+                    results.append({
+                        "source": "Instagram",
+                        "text": caption,
+                        "url": link,
+                        "poster": "(Instagram User)"
+                    })
+                    logger.info(f"[INSTAGRAM] Collected caption {len(results)}/{max_items}")
+            
+            browser.close()
+            
+            return json.dumps({
+                "site": "Instagram",
+                "results": results,
+                "storage_state": session_path
+            }, default=str)
+    
+    except Exception as e:
+        logger.error(f"[INSTAGRAM] {e}")
+        return json.dumps({"error": str(e)}, default=str)
+
+
+@tool
+def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
+    """
+    Facebook scraper using Playwright session (Desktop).
+    Extracts posts from keyword search with poster names and text.
+    """
+    ensure_playwright()
+    
+    # Load Session
+    site = "facebook"
+    session_path = load_playwright_storage_state_path(site, out_dir="src/utils/.sessions")
+    if not session_path:
+        session_path = load_playwright_storage_state_path(site, out_dir=".sessions")
+    
+    # Check for alternative session file name
+    if not session_path:
+        alt_paths = [
+            os.path.join(os.getcwd(), "src", "utils", ".sessions", "fb_state.json"),
+            os.path.join(os.getcwd(), ".sessions", "fb_state.json"),
+            os.path.join(os.getcwd(), "fb_state.json")
+        ]
+        for path in alt_paths:
+            if os.path.exists(path):
+                session_path = path
+                logger.info(f"[FACEBOOK] Found session at {path}")
+                break
+    
+    if not session_path:
+        return json.dumps({
+            "error": "No Facebook session found",
+            "solution": "Run the Facebook session manager to create a session"
+        }, default=str)
+    
+    keyword = " ".join(keywords) if keywords else "Sri Lanka"
+    results = []
+    
+    try:
+        with sync_playwright() as p:
+            facebook_desktop_ua = (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+            
+            browser = p.chromium.launch(headless=False)
+            
+            context = browser.new_context(
+                storage_state=session_path,
+                user_agent=facebook_desktop_ua,
+                viewport={"width": 1400, "height": 900},
+            )
+            
+            page = context.new_page()
+            search_url = f"https://www.facebook.com/search/posts?q={keyword.replace(' ', '%20')}"
+            
+            logger.info(f"[FACEBOOK] Navigating to {search_url}")
+            page.goto(search_url, timeout=120000)
+            time.sleep(5)
+            
+            seen = set()
+            stuck = 0
+            last_scroll = 0
+            
+            MESSAGE_SELECTOR = "div[data-ad-preview='message']"
+            
+            # Poster selectors
+            POSTER_SELECTORS = [
+                "h3 strong a span",
+                "h3 strong span",
+                "h3 a span",
+                "strong a span",
+                "a[role='link'] span:not([class*='timestamp'])",
+                "span.fwb a",
+                "span.fwb",
+                "a[aria-hidden='false'] span",
+                "a[role='link'] span",
+            ]
+            
+            def extract_poster(post):
+                """Extract poster name from Facebook post"""
+                parent = post.locator("xpath=ancestor::div[contains(@class, 'x1yztbdb')][1]")
+                
+                for selector in POSTER_SELECTORS:
+                    try:
+                        el = parent.locator(selector).first
+                        if el and el.count() > 0:
+                            name = el.inner_text().strip()
+                            if name and name != "Facebook" and len(name) > 1:
+                                return name
+                    except:
+                        pass
+                
+                return "(Unknown)"
+            
+            while len(results) < max_items:
+                posts = page.locator(MESSAGE_SELECTOR).all()
+                
+                for post in posts:
+                    try:
+                        raw = post.inner_text().strip()
+                        cleaned = clean_fb_text(raw)
+                        
+                        poster = extract_poster(post)
+                        
+                        if cleaned and len(cleaned) > 30:
+                            key = poster + "::" + cleaned
+                            if key not in seen:
+                                seen.add(key)
+                                results.append({
+                                    "source": "Facebook",
+                                    "poster": poster,
+                                    "text": cleaned,
+                                    "url": "https://www.facebook.com"
+                                })
+                                logger.info(f"[FACEBOOK] Collected post {len(results)}/{max_items}")
+                        
+                        if len(results) >= max_items:
+                            break
+                    
+                    except:
+                        pass
+                
+                # Scroll
+                page.evaluate("window.scrollBy(0, 2300)")
+                time.sleep(1.2)
+                
+                new_scroll = page.evaluate("window.scrollY")
+                stuck = stuck + 1 if new_scroll == last_scroll else 0
+                last_scroll = new_scroll
+                
+                if stuck >= 3:
+                    logger.info("[FACEBOOK] Reached end of results")
+                    break
+            
+            browser.close()
+            
+            return json.dumps({
+                "site": "Facebook",
+                "results": results[:max_items],
+                "storage_state": session_path
+            }, default=str)
+    
+    except Exception as e:
+        logger.error(f"[FACEBOOK] {e}")
+        return json.dumps({"error": str(e)}, default=str)
+
+
+@tool
+def scrape_reddit(keywords: List[str], limit: int = 20, subreddit: Optional[str] = None):
+    """
+    Scrape Reddit for posts matching specific keywords.
+    Optionally restrict to a specific subreddit.
+    """
+    data = scrape_reddit_impl(keywords=keywords, limit=limit, subreddit=subreddit)
+    return json.dumps(data, default=str)
+
 
 
 # ============================================
