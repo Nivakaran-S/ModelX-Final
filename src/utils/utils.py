@@ -2327,6 +2327,25 @@ TOOL_MAPPING = {
     "think_tool": think_tool,
 }
 
+# Import and add profile scrapers for competitive intelligence
+try:
+    from src.utils.profile_scrapers import (
+        scrape_twitter_profile,
+        scrape_facebook_profile,
+        scrape_instagram_profile,
+        scrape_linkedin_profile,
+        scrape_product_reviews
+    )
+    TOOL_MAPPING["scrape_twitter_profile"] = scrape_twitter_profile
+    TOOL_MAPPING["scrape_facebook_profile"] = scrape_facebook_profile
+    TOOL_MAPPING["scrape_instagram_profile"] = scrape_instagram_profile
+    TOOL_MAPPING["scrape_linkedin_profile"] = scrape_linkedin_profile
+    TOOL_MAPPING["scrape_product_reviews"] = scrape_product_reviews
+    print("[OK] Profile scrapers loaded for Intelligence Agent")
+except ImportError as e:
+    print(f"[WARN] Profile scrapers not available: {e}")
+
+
 ALL_TOOLS = list(TOOL_MAPPING.values())
 
 __all__ = [
