@@ -32,6 +32,9 @@ class CombinedAgentNode:
     
     def __init__(self, llm):
         self.llm = llm
+        # Initialize production storage manager
+        self.storage = StorageManager()
+        logger.info("[CombinedAgentNode] Initialized with production storage layer")
 
     # =========================================================================
     # 1. GRAPH INITIATOR
@@ -108,23 +111,47 @@ class CombinedAgentNode:
         
         logger.info(f"[FeedAggregatorAgent] Received {len(flattened)} raw insights from domain agents")
         
-        # Step 3: Deduplicate by summary text (first 120 chars)
-        seen = set()
+        # Step 3: PRODUCTION DEDUPLICATION - 3-tier pipeline (SQLite → ChromaDB → Accept)
         unique: List[Dict[str, Any]] = []
+        dedup_stats = {
+            "exact_matches": 0,
+            "semantic_matches": 0,
+            "unique_events": 0
+        }
         
         for ins in flattened:
             summary = str(ins.get("summary", "")).strip()
             if not summary:
                 continue
-                
-            # Create dedup key from first 120 chars
-            key = summary[:120]
             
-            if key not in seen:
-                seen.add(key)
-                unique.append(ins)
+            # Use storage manager's 3-tier deduplication
+            is_dup, reason, match_data = self.storage.is_duplicate(summary)
+            
+            if is_dup:
+                if reason == "exact_match":
+                    dedup_stats["exact_matches"] += 1
+                elif reason == "semantic_match":
+                    dedup_stats["semantic_matches"] += 1
+                    # Link similar events in Neo4j knowledge graph
+                    if match_data and "id" in match_data:
+                        event_id = ins.get("source_event_id") or str(uuid.uuid4())
+                        self.storage.link_similar_events(
+                            event_id, 
+                            match_data["id"], 
+                            match_data.get("similarity", 0.85)
+                        )
+                continue
+            
+            # Event is unique - accept it
+            dedup_stats["unique_events"] += 1
+            unique.append(ins)
         
-        logger.info(f"[FeedAggregatorAgent] After deduplication: {len(unique)} unique insights")
+        logger.info(
+            f"[FeedAggregatorAgent] Deduplication complete: "
+            f"{dedup_stats['unique_events']} unique, "
+            f"{dedup_stats['exact_matches']} exact dups, "
+            f"{dedup_stats['semantic_matches']} semantic dups"
+        )
         
         # Step 4: Rank by risk_score + severity boost + Opportunity Logic
         severity_boost_map = {
@@ -159,24 +186,41 @@ class CombinedAgentNode:
             summary_preview = str(ins.get("summary", ""))[:80]
             logger.info(f"  {i+1}. [{domain}] ({impact}) Score={score:.3f} | {summary_preview}...")
         
-        # Step 5: Convert to ClassifiedEvent format for final feed
+        # Step 5: Convert to ClassifiedEvent format AND store in all databases
         converted: List[Dict[str, Any]] = []
         
         for ins in ranked:
             event_id = ins.get("source_event_id") or str(uuid.uuid4())
+            summary = str(ins.get("summary", ""))[:1000]
+            domain = ins.get("domain", "unknown")
+            severity = ins.get("severity", "medium")
+            impact_type = ins.get("impact_type", "risk")
+            confidence = round(calculate_score(ins), 3)
+            timestamp = datetime.utcnow().isoformat()
             
             classified = {
                 "event_id": event_id,
-                "content_summary": str(ins.get("summary", ""))[:1000],
-                "target_agent": ins.get("domain", "unknown"),
-                "confidence_score": round(calculate_score(ins), 3),
-                "severity": ins.get("severity", "medium"),
-                "impact_type": ins.get("impact_type", "risk"), # Preserve impact type
-                "timestamp": datetime.utcnow().isoformat()
+                "content_summary": summary,
+                "target_agent": domain,
+                "confidence_score": confidence,
+                "severity": severity,
+                "impact_type": impact_type,
+                "timestamp": timestamp
             }
             converted.append(classified)
+            
+            # CRITICAL: Store in all databases (SQLite, ChromaDB, Neo4j)
+            self.storage.store_event(
+                event_id=event_id,
+                summary=summary,
+                domain=domain,
+                severity=severity,
+                impact_type=impact_type,
+                confidence_score=confidence,
+                timestamp=timestamp
+            )
         
-        logger.info(f"[FeedAggregatorAgent] ===== PRODUCED {len(converted)} RANKED EVENTS =====")
+        logger.info(f"[FeedAggregatorAgent] ===== PRODUCED {len(converted)} RANKED EVENTS =====") logger.info(f"[FeedAggregatorAgent] ===== STORED IN ALL DATABASES (SQLite+ChromaDB+Neo4j) =====")
         
         return {"final_ranked_feed": converted}
     
@@ -272,6 +316,20 @@ class CombinedAgentNode:
         logger.info(f"  Market Instability: {snapshot['market_instability']}")
         logger.info(f"  Opportunity Index: {snapshot['opportunity_index']}")
         logger.info(f"  High Priority Events: {snapshot['high_priority_count']}/{snapshot['total_events']}")
+        
+        # PRODUCTION FEATURE: Export to CSV for archival
+        try:
+            if feed:
+                self.storage.export_feed_to_csv(feed)
+                logger.info(f"[DataRefresherAgent] Exported {len(feed)} events to CSV")
+        except Exception as e:
+            logger.error(f"[DataRefresherAgent] CSV export error: {e}")
+        
+        # Cleanup old cache entries periodically
+        try:
+            self.storage.cleanup_old_data()
+        except Exception as e:
+            logger.error(f"[DataRefresherAgent] Cleanup error: {e}")
         
         return {"risk_dashboard_snapshot": snapshot}
 

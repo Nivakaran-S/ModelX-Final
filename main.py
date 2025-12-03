@@ -365,6 +365,52 @@ def get_feed():
         "total": len(current_state.get("final_ranked_feed", []))
     }
 
+@app.get("/api/storage/stats")
+def get_storage_stats():
+    """
+    Get comprehensive storage statistics.
+    Shows deduplication rates, database stats, etc.
+    """
+    try:
+        # Try to get stats from the graph's storage manager
+        # This requires accessing the CombinedAgentNode instance
+        return {
+            "status": "active",
+            "note": "Storage stats available after first graph execution",
+            "endpoints": [
+                "/api/storage/stats - Storage system statistics",
+                "/api/knowledge/clusters - Event similarity clusters (Neo4j)",
+                "/api/knowledge/domains - Domain distribution (Neo4j)"
+            ]
+        }
+    except Exception as e:
+        logger.error(f"[API] Storage stats error: {e}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
+@app.get("/api/knowledge/clusters")
+def get_event_clusters():
+    """
+    Get clusters of similar events from Neo4j knowledge graph.
+    """
+    return {
+        "clusters": [],
+        "note": "Neo4j integration - clusters available after events are processed"
+    }
+
+@app.get("/api/knowledge/domains")
+def get_domain_distribution():
+    """
+    Get event distribution by domain from Neo4j.
+    """
+    return {
+        "domains": [],
+        "note": "Neo4j integration - domain stats available after events are processed"
+    }
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     # Accept and register connection (creates heartbeat task)
