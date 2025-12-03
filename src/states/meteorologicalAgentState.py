@@ -1,6 +1,6 @@
 """
 src/states/meteorologicalAgentState.py
-Meteorological Agent State - handles weather and disaster alerts
+Meteorological Agent State - handles weather alerts, DMC warnings, forecasts
 """
 import operator 
 from typing import Optional, List, Dict, Any
@@ -10,7 +10,7 @@ from typing_extensions import TypedDict, Annotated
 class MeteorologicalAgentState(TypedDict, total=False):
     """
     State for Meteorological Agent.
-    Monitors DMC alerts and weather forecasts.
+    Monitors DMC alerts, weather forecasts, climate data, disaster warnings.
     """
     
     # ===== ORCHESTRATOR/WORKER BOOKKEEPING =====
@@ -24,14 +24,28 @@ class MeteorologicalAgentState(TypedDict, total=False):
     latest_worker_results: List[Dict[str, Any]]
     
     # ===== CHANGE DETECTION =====
-    # Tracks if new alerts appeared since last run
     last_alerts_hash: Optional[int]
     change_detected: bool
     
+    # ===== SOCIAL MEDIA MONITORING =====
+    social_media_results: Annotated[List[Dict[str, Any]], operator.add]
+    
+    # ===== STRUCTURED FEED OUTPUT =====
+    district_feeds: Dict[str, List[Dict[str, Any]]]  # {district: [weather posts]}
+    national_feed: List[Dict[str, Any]]  # Overall Sri Lanka weather
+    alert_feed: List[Dict[str, Any]]  # Critical weather alerts
+    
+    # ===== LLM PROCESSING =====
+    llm_summary: Optional[str]
+    structured_output: Dict[str, Any]  # Final formatted output
+    
     # ===== FEED OUTPUT =====
-    final_feed: str  # Human-readable bulletin
+    final_feed: str
     feed_history: Annotated[List[str], operator.add]
     
     # ===== INTEGRATION WITH PARENT GRAPH =====
-    # CRITICAL: Output formatted for CombinedAgentState
     domain_insights: List[Dict[str, Any]]
+    
+    # ===== FEED AGGREGATOR =====
+    aggregator_stats: Dict[str, Any]
+    dataset_path: str

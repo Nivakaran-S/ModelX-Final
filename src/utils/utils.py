@@ -7,6 +7,7 @@ Updated:
 - Added 'Rainfall' PDF detection for district-level rain data.
 - Captures ALL district/city rows from the forecast table.
 """
+from urllib.parse import quote
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 import os
@@ -1702,7 +1703,8 @@ def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
             )
             
             page = context.new_page()
-            search_url = f"https://www.facebook.com/search/posts?q={keyword.replace(' ', '%20')}"
+            
+            search_url = f"https://www.facebook.com/search/posts?q={quote(keyword)}"
             
             logger.info(f"[FACEBOOK] Navigating to {search_url}")
             page.goto(search_url, timeout=120000)

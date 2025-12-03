@@ -34,9 +34,12 @@ logger.setLevel(logging.INFO)
 
 class Neo4jManager:
     """
-    Production-grade Neo4j manager for political feed tracking.
+    Production-grade Neo4j manager for multi-domain feed tracking.
+    Supports separate labels for each agent domain:
+    - PoliticalPost, EconomicalPost, MeteorologicalPost, SocialPost
+    
     Handles:
-    - Post uniqueness checking (URL + content hash)
+    - Post uniqueness checking (URL + content hash) per domain
     - Post storage with metadata
     - Relationship tracking
     - Fast duplicate detection
@@ -46,13 +49,26 @@ class Neo4jManager:
         self,
         uri: Optional[str] = None,
         user: Optional[str] = None,
-        password: Optional[str] = None
+        password: Optional[str] = None,
+        domain: str = "political"
     ):
-        """Initialize Neo4j connection"""
+        """Initialize Neo4j connection with domain-specific labeling"""
         if not NEO4J_AVAILABLE:
             logger.warning("[NEO4J] neo4j package not installed. Install with: pip install neo4j langchain-neo4j")
             self.driver = None
             return
+        
+        # Set domain-specific label
+        domain_map = {
+            "political": "PoliticalPost",
+            "economical": "EconomicalPost",
+            "economic": "EconomicalPost",
+            "meteorological": "MeteorologicalPost",
+            "weather": "MeteorologicalPost",
+            "social": "SocialPost"
+        }
+        self.domain = domain.lower()
+        self.label = domain_map.get(self.domain, "Post")  # Fallback to generic Post
         
         self.uri = uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
         self.user = user or os.getenv("NEO4J_USER", "neo4j")
@@ -70,6 +86,7 @@ class Neo4jManager:
             with self.driver.session() as session:
                 session.run("RETURN 1")
             logger.info(f"[NEO4J] ✓ Connected to {self.uri}")
+            logger.info(f"[NEO4J] ✓ Using label: {self.label} (domain: {self.domain})")
             
             # Create constraints and indexes
             self._create_constraints()
@@ -82,19 +99,23 @@ class Neo4jManager:
             self.driver = None
     
     def _create_constraints(self):
-        """Create database constraints and indexes for performance"""
+        """Create database constraints and indexes for performance (domain-specific)"""
         if not self.driver:
             return
         
+        # Domain-specific constraints using the label
+        label = self.label
         constraints = [
-            # Unique constraint on URL
-            "CREATE CONSTRAINT post_url_unique IF NOT EXISTS FOR (p:Post) REQUIRE p.url IS UNIQUE",
-            # Unique constraint on content hash
-            "CREATE CONSTRAINT post_hash_unique IF NOT EXISTS FOR (p:Post) REQUIRE p.content_hash IS UNIQUE",
+            # Unique constraint on URL per domain
+            f"CREATE CONSTRAINT {self.domain}_post_url_unique IF NOT EXISTS FOR (p:{label}) REQUIRE p.url IS UNIQUE",
+            # Unique constraint on content hash per domain
+            f"CREATE CONSTRAINT {self.domain}_post_hash_unique IF NOT EXISTS FOR (p:{label}) REQUIRE p.content_hash IS UNIQUE",
             # Index on timestamp for faster queries
-            "CREATE INDEX post_timestamp IF NOT EXISTS FOR (p:Post) ON (p.timestamp)",
+            f"CREATE INDEX {self.domain}_post_timestamp IF NOT EXISTS FOR (p:{label}) ON (p.timestamp)",
             # Index on platform
-            "CREATE INDEX post_platform IF NOT EXISTS FOR (p:Post) ON (p.platform)",
+            f"CREATE INDEX {self.domain}_post_platform IF NOT EXISTS FOR (p:{label}) ON (p.platform)",
+            # Index on domain for cross-domain queries
+            f"CREATE INDEX {self.domain}_post_domain IF NOT EXISTS FOR (p:{label}) ON (p.domain)",
         ]
         
         try:
@@ -111,7 +132,7 @@ class Neo4jManager:
     
     def is_duplicate(self, post_url: str, content_hash: str) -> bool:
         """
-        Check if post already exists by URL or content hash
+        Check if post already exists by URL or content hash within this domain
         Returns True if duplicate, False if unique
         """
         if not self.driver:
@@ -119,12 +140,14 @@ class Neo4jManager:
         
         try:
             with self.driver.session() as session:
-                result = session.run(
-                    """
-                    MATCH (p:Post)
+                # Check within domain-specific label
+                query = f"""
+                    MATCH (p:{self.label})
                     WHERE p.url = $url OR p.content_hash = $hash
                     RETURN COUNT(p) as count
-                    """,
+                    """
+                result = session.run(
+                    query,
                     url=post_url,
                     hash=content_hash
                 )
@@ -137,7 +160,7 @@ class Neo4jManager:
     
     def store_post(self, post_data: Dict[str, Any]) -> bool:
         """
-        Store a unique post in Neo4j with metadata
+        Store a unique post in Neo4j with domain-specific label and metadata
         Returns True if stored successfully, False otherwise
         """
         if not self.driver:
@@ -146,10 +169,9 @@ class Neo4jManager:
         
         try:
             with self.driver.session() as session:
-                # Create or update post node
-                session.run(
-                    """
-                    MERGE (p:Post {url: $url})
+                # Create or update post node with domain-specific label
+                query = f"""
+                    MERGE (p:{self.label} {{url: $url}})
                     SET p.content_hash = $content_hash,
                         p.timestamp = $timestamp,
                         p.platform = $platform,
@@ -160,8 +182,11 @@ class Neo4jManager:
                         p.text = $text,
                         p.engagement = $engagement,
                         p.source_tool = $source_tool,
+                        p.domain = $domain,
                         p.updated_at = datetime()
-                    """,
+                    """
+                session.run(
+                    query,
                     url=post_data.get("post_url", ""),
                     content_hash=post_data.get("content_hash", ""),
                     timestamp=post_data.get("timestamp", ""),
@@ -172,17 +197,19 @@ class Neo4jManager:
                     title=post_data.get("title", "")[:500],  # Limit length
                     text=post_data.get("text", "")[:2000],  # Limit length
                     engagement=json.dumps(post_data.get("engagement", {})),
-                    source_tool=post_data.get("source_tool", "")
+                    source_tool=post_data.get("source_tool", ""),
+                    domain=self.domain
                 )
                 
                 # Create relationships if district exists
                 if post_data.get("district"):
-                    session.run(
-                        """
-                        MATCH (p:Post {url: $url})
-                        MERGE (d:District {name: $district})
+                    district_query = f"""
+                        MATCH (p:{self.label} {{url: $url}})
+                        MERGE (d:District {{name: $district}})
                         MERGE (p)-[:LOCATED_IN]->(d)
-                        """,
+                        """
+                    session.run(
+                        district_query,
                         url=post_data.get("post_url"),
                         district=post_data.get("district")
                     )
@@ -194,13 +221,14 @@ class Neo4jManager:
             return False
     
     def get_post_count(self) -> int:
-        """Get total number of posts in database"""
+        """Get total number of posts in database for this domain"""
         if not self.driver:
             return 0
         
         try:
             with self.driver.session() as session:
-                result = session.run("MATCH (p:Post) RETURN COUNT(p) as count")
+                query = f"MATCH (p:{self.label}) RETURN COUNT(p) as count"
+                result = session.run(query)
                 record = result.single()
                 return record["count"] if record else 0
         except Exception as e:
@@ -217,17 +245,20 @@ class Neo4jManager:
 class ChromaDBManager:
     """
     Production-grade ChromaDB manager for vector storage.
+    Uses shared collection for all domains with metadata filtering.
     Handles:
     - Persistent vector storage for RAG
     - Document chunking and embeddings
     - Collection management
+    - Domain-based filtering
     """
     
     def __init__(
         self,
-        collection_name: str = "political_feeds",
+        collection_name: str = "modelx_feeds",  # Shared collection
         persist_directory: Optional[str] = None,
-        embedding_function=None
+        embedding_function=None,
+        domain: str = "political"
     ):
         """Initialize ChromaDB with persistent storage and text splitter"""
         if not CHROMA_AVAILABLE:
@@ -236,7 +267,8 @@ class ChromaDBManager:
             self.collection = None
             return
         
-        self.collection_name = collection_name
+        self.domain = domain.lower()
+        self.collection_name = collection_name  # Shared collection for all domains
         self.persist_directory = persist_directory or os.getenv(
             "CHROMADB_PATH",
             "./data/chromadb"
@@ -255,10 +287,10 @@ class ChromaDBManager:
                 )
             )
             
-            # Get or create collection
+            # Get or create shared collection for all domains
             self.collection = self.client.get_or_create_collection(
                 name=self.collection_name,
-                metadata={"description": "Political feeds for RAG chatbot"}
+                metadata={"description": "Multi-domain feeds for RAG chatbot (Political, Economic, Weather, Social)"}
             )
             
             # Initialize Text Splitter
@@ -275,6 +307,7 @@ class ChromaDBManager:
                 self.text_splitter = None
             
             logger.info(f"[CHROMADB] ✓ Connected to collection '{self.collection_name}'")
+            logger.info(f"[CHROMADB] ✓ Domain: {self.domain}")
             logger.info(f"[CHROMADB] ✓ Persist directory: {self.persist_directory}")
             logger.info(f"[CHROMADB] ✓ Current document count: {self.collection.count()}")
             
@@ -324,6 +357,7 @@ class ChromaDBManager:
                     "post_id": base_id,
                     "chunk_index": i,
                     "total_chunks": len(chunks),
+                    "domain": self.domain,  # Add domain for filtering
                     "timestamp": post_data.get("timestamp", ""),
                     "platform": post_data.get("platform", ""),
                     "category": post_data.get("category", ""),
