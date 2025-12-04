@@ -1,0 +1,429 @@
+post_id,timestamp,platform,category,entity,poster,post_url,title,text,content_hash,engagement_score,engagement_likes,engagement_shares,engagement_comments,source_tool
+1pdo9s2,1764815732.0,reddit,competitor_mention,Dialog,LlamaNinja3000,https://www.reddit.com/r/tipofmyjoystick/comments/1pdo9s2/mobile_2008_2015_old_school_game_i_played_on_my/,[Mobile] [2008 - 2015] Old school game I played on my dad's apple ipad as a kid.,"Help me find an old 3d school game I played when I was a kid. Early 2008 mobile game to 2015 timeframe probably?...I played it on an apple ipad my dad had with the white wide charger. The Game is not the one in the photo and is just a reference.
+
+Im honestly not even sure what the genere was. As far as I can recall it had no character customization, no dialog, and no clear goal. I think there might've been a timer maybe before other students started to chase you and beat your character up? The t",8903bc8bfb5428a7216017d19dd18867af3eea8b06c76d7ff1a26e0bf7fb4dda,1,0,0,0,scrape_reddit
+1pdo02t,1764814976.0,reddit,competitor_mention,Dialog,Gina-In-The-Hole,https://www.reddit.com/r/Brosona/comments/1pdo02t/a_test_compromised_of_my_otherwardly_glory/,A test compromised of MY otherwardly glory,link to the quiz: [https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg\_\_RUWTlIOhmvZdX2dKLMP8n\_VKQkw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg__RUWTlIOhmvZdX2dKLMP8n_VKQkw/viewform?usp=dialog),e81c9f352481cdf718571fce936cc123467202101d757bf30d73b878a38d7d73,4,0,0,9,scrape_reddit
+1pdnzp7,1764814946.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/AutismCertified/comments/1pdnzp7/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,0,0,0,5,scrape_reddit
+1pdnwfe,1764814691.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/autism/comments/1pdnwfe/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,3,0,0,2,scrape_reddit
+1pdnimt,1764813644.0,reddit,competitor_mention,Dialog,itamer,https://www.reddit.com/r/FarmMergeValley/comments/1pdnimt/i_just_realise_the_make_dialog_lets_me_jump/,I just realise the make dialog lets me jump between producers!,I knew those buttons at the bottom of the make dialog showed what else was being made but I didn’t realise I could use them to quickly make and claim from the other producers. It’ll only save seconds but worth it!,1c4c26de284181d2863e053647c88fe4030b2938359558c4ed5838664013bcbe,1,0,0,0,scrape_reddit
+1pdnh0q,1764813523.0,reddit,competitor_mention,Dialog,TheSuperGreatDoctor,https://www.reddit.com/r/diyelectronics/comments/1pdnh0q/seeking_diy_electronics_feedback_ai_robot_with/,Seeking DIY electronics feedback: AI robot with maker-friendly SDK and hardware extensibility,"Hi r/diyelectronics,
+
+We're building an AI agentic robot and want input from DIY electronics enthusiasts on whether the ""extensibility and modding"" approach would actually get used.
+
+Why this might interest you:
+
+* AI robot with SDK for building custom behaviors and hardware integrations
+* Modular design supporting Arduino/ESP32 sensor/actuator additions
+* Natural language + code hybrid programming
+* Community platform for sharing mods and integrations
+
+Current prototype: Desktop quadruped with ",92490993fc60ce2b9be9f077fce17138e383e9acca8a9a77a055303eb083c4d6,1,0,0,0,scrape_reddit
+1pdneuf,1764813360.0,reddit,competitor_mention,Dialog,DanteHelsing420,https://www.reddit.com/r/FF06B5/comments/1pdneuf/lines_of_code_maybe_related_to_the_fate_of_sue/,Lines of code maybe related to the fate of Sue Glover?,"Found these lines of code in Engine-Config-Base- File name ""scenesystem""
+
+Could this be the reason Garry's protégé just ""disappears"" after acting like we started a convo with her and left it off? should I tamper?
+
+
+
+PlayReturnFromSectionBeginningIfNPCInterrupted = false
+
+PlayReturnFromSectionBeginningIfPlayerInterruptedAndPlayerFirstDialog = true
+
+PlayReturnFromSectionBeginningIfPlayerInterruptedAndNPCFirstDialog = false",51216f92053a3ba5b751321d621445419a432f3ac1b98cdbfa21d76c87e7eabf,0,0,0,2,scrape_reddit
+1pdnb8w,1764813078.0,reddit,competitor_mention,Dialog,the_e_and_t_horse,https://www.reddit.com/r/roll20LFG/comments/1pdnb8w/online_5e_2014_sundays_300pm_mst_humanity_and_the/,[online] [5e 2014] [sundays 3:00pm] [MST] Humanity and the Colour out of space,"	You haven’t seen the sun in over a month now… not since the event… one day every living thing in the city mutated all at the same time.  A dome blocks the light, along with phone and radio signals. You are completely cut off. Left to fend for yourself in your new form. 
+
+The metro tunnels are now a battleground. Toddler sized rats fight against hideously mutated cats that can only be described as goblinoid in appearance… but the metro might be safer than the streets. Monstrous animals prowl the",9c01f79ecc0c82c91d3d048b4714bd1a9a49f8df34d5903e9e9283eada0f5214,1,0,0,0,scrape_reddit
+1pdn85y,1764812844.0,reddit,competitor_mention,Dialog,LunarPOTATO426,https://www.reddit.com/r/Nightreign/comments/1pdn85y/are_they_out_yet/,Are they out yet?,"I logged on today and I see the spots for the two new characters and thought I just had to redefeat tricephalos. After I killed tricephalos I thought you had to talk to the wooden dude and then the small jar, but neither have new dialog options, are they not fully out yet or am I doing something wrong?",71ad22d162c4cd01b3a3585086c7a3313b18794c96d9629db592ff0d07738aae,2,0,0,1,scrape_reddit
+1pdn6kf,1764812721.0,reddit,competitor_mention,Dialog,Expensive-Brick-8210,https://www.reddit.com/r/Domundi/comments/1pdn6kf/bl_fandom_survey_need_help_with_grade_12_research/,BL Fandom Survey - Need Help With Grade 12 Research!!,"(Hi mods, thank you in advance for the approval, this post is for a high-school research project, not promotion. Please let me know if anything needs adjusting!)
+
+Hi everyone! I’m conducting research for my Grade 12 Capstone Seminar paper, and I’d really appreciate your help. This survey will only be included in my paper and presented within my highschool. All of the questions and the topic itself have been approved by my Capstone teachers. Results will continue to be collected for the next 2-3 ",4f5221a74ad83d6e60663589715169d98adbb5bf3e2123897a5c58e7059b07e1,1,0,0,0,scrape_reddit
+1pdnsv1,1764814426.0,reddit,competitor_mention,SLT,Impossible-Button-82,https://www.reddit.com/r/ram_trucks/comments/1pdnsv1/best_budget_exhaust_setup_for_single_exit_ram/,Best Budget Exhaust Setup For Single Exit Ram 1500 5.7l Hemi,"I’ve got a 2011 Ram 1500 SLT with the 5.7l Hemi and the factory single exit exhaust. I’ve been trying to find an exhaust setup that will be loud with a deep tone and no rasp. All the setups I’m seeing are for trucks with factory dual exhausts. What setups are you guys with the factory single exit running? 
+
+Not trying to spend a ton of money on modifying the factory exhaust but I would spend more if anyone knows of a system that will give me dual split side exit tail pipes out the rear as well a",9e8deb2925bdc29563a125eb2cca4d0bfb0818fc6eca69eeee2ad94db1cf037d,2,0,0,2,scrape_reddit
+1pdmr45,1764811517.0,reddit,competitor_mention,SLT,Old-School8916,https://www.reddit.com/r/MapPorn/comments/1pdmr45/countries_where_percentage_of_urban_population/,Countries where percentage of urban population living in slums is &gt;30% (2022),"[source](https://www.statista.com/chart/35252/share-of-urban-population-living-in-slums/?srsltid=AfmBOoophyMA7Qy9aqi8FRA9lE-JY4tJubbaCq3cU3INEnauaIrHC46S)
+
+slum definition (UN): A slum household is defined as a group of individuals living under the same roof lacking one or more of the following conditions: access to improved water, access to improved sanitation, sufficient living area, durability of housing, and security of tenure.",0ea7329da2fd833bafe5663e5bd2b349b8db0b6a7c7b1c9b3f144245c9883cd5,28,0,0,21,scrape_reddit
+1pdo9s2,1764815732.0,reddit,competitor_mention,Dialog,LlamaNinja3000,https://www.reddit.com/r/tipofmyjoystick/comments/1pdo9s2/mobile_2008_2015_old_school_game_i_played_on_my/,[Mobile] [2008 - 2015] Old school game I played on my dad's apple ipad as a kid.,"Help me find an old 3d school game I played when I was a kid. Early 2008 mobile game to 2015 timeframe probably?...I played it on an apple ipad my dad had with the white wide charger. The Game is not the one in the photo and is just a reference.
+
+Im honestly not even sure what the genere was. As far as I can recall it had no character customization, no dialog, and no clear goal. I think there might've been a timer maybe before other students started to chase you and beat your character up? The t",8903bc8bfb5428a7216017d19dd18867af3eea8b06c76d7ff1a26e0bf7fb4dda,1,0,0,0,scrape_reddit
+1pdo02t,1764814976.0,reddit,competitor_mention,Dialog,Gina-In-The-Hole,https://www.reddit.com/r/Brosona/comments/1pdo02t/a_test_compromised_of_my_otherwardly_glory/,A test compromised of MY otherwardly glory,link to the quiz: [https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg\_\_RUWTlIOhmvZdX2dKLMP8n\_VKQkw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg__RUWTlIOhmvZdX2dKLMP8n_VKQkw/viewform?usp=dialog),e81c9f352481cdf718571fce936cc123467202101d757bf30d73b878a38d7d73,4,0,0,9,scrape_reddit
+1pdnzp7,1764814946.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/AutismCertified/comments/1pdnzp7/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,0,0,0,5,scrape_reddit
+1pdnwfe,1764814691.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/autism/comments/1pdnwfe/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,3,0,0,2,scrape_reddit
+1pdnimt,1764813644.0,reddit,competitor_mention,Dialog,itamer,https://www.reddit.com/r/FarmMergeValley/comments/1pdnimt/i_just_realise_the_make_dialog_lets_me_jump/,I just realise the make dialog lets me jump between producers!,I knew those buttons at the bottom of the make dialog showed what else was being made but I didn’t realise I could use them to quickly make and claim from the other producers. It’ll only save seconds but worth it!,1c4c26de284181d2863e053647c88fe4030b2938359558c4ed5838664013bcbe,1,0,0,0,scrape_reddit
+1pdnh0q,1764813523.0,reddit,competitor_mention,Dialog,TheSuperGreatDoctor,https://www.reddit.com/r/diyelectronics/comments/1pdnh0q/seeking_diy_electronics_feedback_ai_robot_with/,Seeking DIY electronics feedback: AI robot with maker-friendly SDK and hardware extensibility,"Hi r/diyelectronics,
+
+We're building an AI agentic robot and want input from DIY electronics enthusiasts on whether the ""extensibility and modding"" approach would actually get used.
+
+Why this might interest you:
+
+* AI robot with SDK for building custom behaviors and hardware integrations
+* Modular design supporting Arduino/ESP32 sensor/actuator additions
+* Natural language + code hybrid programming
+* Community platform for sharing mods and integrations
+
+Current prototype: Desktop quadruped with ",92490993fc60ce2b9be9f077fce17138e383e9acca8a9a77a055303eb083c4d6,1,0,0,0,scrape_reddit
+1pdneuf,1764813360.0,reddit,competitor_mention,Dialog,DanteHelsing420,https://www.reddit.com/r/FF06B5/comments/1pdneuf/lines_of_code_maybe_related_to_the_fate_of_sue/,Lines of code maybe related to the fate of Sue Glover?,"Found these lines of code in Engine-Config-Base- File name ""scenesystem""
+
+Could this be the reason Garry's protégé just ""disappears"" after acting like we started a convo with her and left it off? should I tamper?
+
+
+
+PlayReturnFromSectionBeginningIfNPCInterrupted = false
+
+PlayReturnFromSectionBeginningIfPlayerInterruptedAndPlayerFirstDialog = true
+
+PlayReturnFromSectionBeginningIfPlayerInterruptedAndNPCFirstDialog = false",51216f92053a3ba5b751321d621445419a432f3ac1b98cdbfa21d76c87e7eabf,0,0,0,2,scrape_reddit
+1pdnb8w,1764813078.0,reddit,competitor_mention,Dialog,the_e_and_t_horse,https://www.reddit.com/r/roll20LFG/comments/1pdnb8w/online_5e_2014_sundays_300pm_mst_humanity_and_the/,[online] [5e 2014] [sundays 3:00pm] [MST] Humanity and the Colour out of space,"	You haven’t seen the sun in over a month now… not since the event… one day every living thing in the city mutated all at the same time.  A dome blocks the light, along with phone and radio signals. You are completely cut off. Left to fend for yourself in your new form. 
+
+The metro tunnels are now a battleground. Toddler sized rats fight against hideously mutated cats that can only be described as goblinoid in appearance… but the metro might be safer than the streets. Monstrous animals prowl the",9c01f79ecc0c82c91d3d048b4714bd1a9a49f8df34d5903e9e9283eada0f5214,1,0,0,0,scrape_reddit
+1pdn85y,1764812844.0,reddit,competitor_mention,Dialog,LunarPOTATO426,https://www.reddit.com/r/Nightreign/comments/1pdn85y/are_they_out_yet/,Are they out yet?,"I logged on today and I see the spots for the two new characters and thought I just had to redefeat tricephalos. After I killed tricephalos I thought you had to talk to the wooden dude and then the small jar, but neither have new dialog options, are they not fully out yet or am I doing something wrong?",71ad22d162c4cd01b3a3585086c7a3313b18794c96d9629db592ff0d07738aae,2,0,0,1,scrape_reddit
+1pdn6kf,1764812721.0,reddit,competitor_mention,Dialog,Expensive-Brick-8210,https://www.reddit.com/r/Domundi/comments/1pdn6kf/bl_fandom_survey_need_help_with_grade_12_research/,BL Fandom Survey - Need Help With Grade 12 Research!!,"(Hi mods, thank you in advance for the approval, this post is for a high-school research project, not promotion. Please let me know if anything needs adjusting!)
+
+Hi everyone! I’m conducting research for my Grade 12 Capstone Seminar paper, and I’d really appreciate your help. This survey will only be included in my paper and presented within my highschool. All of the questions and the topic itself have been approved by my Capstone teachers. Results will continue to be collected for the next 2-3 ",4f5221a74ad83d6e60663589715169d98adbb5bf3e2123897a5c58e7059b07e1,1,0,0,0,scrape_reddit
+1pdnsv1,1764814426.0,reddit,competitor_mention,SLT,Impossible-Button-82,https://www.reddit.com/r/ram_trucks/comments/1pdnsv1/best_budget_exhaust_setup_for_single_exit_ram/,Best Budget Exhaust Setup For Single Exit Ram 1500 5.7l Hemi,"I’ve got a 2011 Ram 1500 SLT with the 5.7l Hemi and the factory single exit exhaust. I’ve been trying to find an exhaust setup that will be loud with a deep tone and no rasp. All the setups I’m seeing are for trucks with factory dual exhausts. What setups are you guys with the factory single exit running? 
+
+Not trying to spend a ton of money on modifying the factory exhaust but I would spend more if anyone knows of a system that will give me dual split side exit tail pipes out the rear as well a",9e8deb2925bdc29563a125eb2cca4d0bfb0818fc6eca69eeee2ad94db1cf037d,2,0,0,2,scrape_reddit
+1pdmr45,1764811517.0,reddit,competitor_mention,SLT,Old-School8916,https://www.reddit.com/r/MapPorn/comments/1pdmr45/countries_where_percentage_of_urban_population/,Countries where percentage of urban population living in slums is &gt;30% (2022),"[source](https://www.statista.com/chart/35252/share-of-urban-population-living-in-slums/?srsltid=AfmBOoophyMA7Qy9aqi8FRA9lE-JY4tJubbaCq3cU3INEnauaIrHC46S)
+
+slum definition (UN): A slum household is defined as a group of individuals living under the same roof lacking one or more of the following conditions: access to improved water, access to improved sanitation, sufficient living area, durability of housing, and security of tenure.",0ea7329da2fd833bafe5663e5bd2b349b8db0b6a7c7b1c9b3f144245c9883cd5,28,0,0,21,scrape_reddit
+1pdp0fs,1764817763.0,reddit,competitor_mention,Dialog,AdmirableMixture5180,https://www.reddit.com/r/careeradvice/comments/1pdp0fs/would_you_follow_an_ig_account_that_featured_a/,Would you follow an IG account that featured a career that you may not know about but find interesting?,"want to support the generations to come and am trying to get an IG account launched to inspire them in their career endeavors. I never even knew my job existed and i could reach for and i want to pay it forward.
+
+if you have a moment to fill this out i would appreciate it. Names will NOT be used (or a fake one will).  This is less about you and more about your job 🙂
+
+[https://docs.google.com/forms/d/e/1FAIpQLSdJUFYhi-SHOD1f3km6f1cj3j6Wg-fDU2b20wswy78LszJjTg/viewform?usp=dialog](https://docs.goog",77f413ab7e05f86b481274c96c308b621ff979bce6e6e6797de291b1b788b357,1,0,0,0,scrape_reddit
+1pdotuo,1764817254.0,reddit,competitor_mention,Dialog,Objective_Comb_4632,https://www.reddit.com/r/Matchmaking/comments/1pdotuo/my_survey/,My Survey,[https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-\_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog),655a369efb3b2423e88d30501a8d9e207d52f04566a639dfeb4071aa9c165288,1,0,0,0,scrape_reddit
+1pdo9s2,1764815732.0,reddit,competitor_mention,Dialog,LlamaNinja3000,https://www.reddit.com/r/tipofmyjoystick/comments/1pdo9s2/mobile_2008_2015_old_school_game_i_played_on_my/,[Mobile] [2008 - 2015] Old school game I played on my dad's apple ipad as a kid.,"Help me find an old 3d 3RD Person school game I played when I was a kid. Early 2008 mobile game to 2015 timeframe probably?...I played it on an apple ipad my dad had with the white wide charger. The Game is not the one in the photo and is just a reference.
+
+Im honestly not even sure what the genere was. As far as I can recall it had no character customization, no dialog, and no clear goal. I think there might've been a timer maybe before other students started to chase you and beat your characte",a65227131c8e3e642a0cef157693e91c11075dbe7453de8073290bd12d054d24,1,0,0,0,scrape_reddit
+1pdo02t,1764814976.0,reddit,competitor_mention,Dialog,Gina-In-The-Hole,https://www.reddit.com/r/Brosona/comments/1pdo02t/a_test_compromised_of_my_otherwardly_glory/,A test compromised of MY otherwardly glory,link to the quiz: [https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg\_\_RUWTlIOhmvZdX2dKLMP8n\_VKQkw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg__RUWTlIOhmvZdX2dKLMP8n_VKQkw/viewform?usp=dialog),e81c9f352481cdf718571fce936cc123467202101d757bf30d73b878a38d7d73,4,0,0,13,scrape_reddit
+1pdnzp7,1764814946.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/AutismCertified/comments/1pdnzp7/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,0,0,0,5,scrape_reddit
+1pdnwfe,1764814691.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/autism/comments/1pdnwfe/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,3,0,0,3,scrape_reddit
+1pdnimt,1764813644.0,reddit,competitor_mention,Dialog,itamer,https://www.reddit.com/r/FarmMergeValley/comments/1pdnimt/i_just_realise_the_make_dialog_lets_me_jump/,I just realise the make dialog lets me jump between producers!,I knew those buttons at the bottom of the make dialog showed what else was being made but I didn’t realise I could use them to quickly make and claim from the other producers. It’ll only save seconds but worth it!,1c4c26de284181d2863e053647c88fe4030b2938359558c4ed5838664013bcbe,1,0,0,0,scrape_reddit
+1pdnh0q,1764813523.0,reddit,competitor_mention,Dialog,TheSuperGreatDoctor,https://www.reddit.com/r/diyelectronics/comments/1pdnh0q/seeking_diy_electronics_feedback_ai_robot_with/,Seeking DIY electronics feedback: AI robot with maker-friendly SDK and hardware extensibility,"Hi r/diyelectronics,
+
+We're building an AI agentic robot and want input from DIY electronics enthusiasts on whether the ""extensibility and modding"" approach would actually get used.
+
+Why this might interest you:
+
+* AI robot with SDK for building custom behaviors and hardware integrations
+* Modular design supporting Arduino/ESP32 sensor/actuator additions
+* Natural language + code hybrid programming
+* Community platform for sharing mods and integrations
+
+Current prototype: Desktop quadruped with ",92490993fc60ce2b9be9f077fce17138e383e9acca8a9a77a055303eb083c4d6,1,0,0,0,scrape_reddit
+1pdnsv1,1764814426.0,reddit,competitor_mention,SLT,Impossible-Button-82,https://www.reddit.com/r/ram_trucks/comments/1pdnsv1/best_budget_exhaust_setup_for_single_exit_ram/,Best Budget Exhaust Setup For Single Exit Ram 1500 5.7l Hemi,"I’ve got a 2011 Ram 1500 SLT with the 5.7l Hemi and the factory single exit exhaust. I’ve been trying to find an exhaust setup that will be loud with a deep tone and no rasp. All the setups I’m seeing are for trucks with factory dual exhausts. What setups are you guys with the factory single exit running? 
+
+Not trying to spend a ton of money on modifying the factory exhaust but I would spend more if anyone knows of a system that will give me dual split side exit tail pipes out the rear as well a",9e8deb2925bdc29563a125eb2cca4d0bfb0818fc6eca69eeee2ad94db1cf037d,2,0,0,3,scrape_reddit
+1pdmr45,1764811517.0,reddit,competitor_mention,SLT,Old-School8916,https://www.reddit.com/r/MapPorn/comments/1pdmr45/countries_where_percentage_of_urban_population/,Countries where percentage of urban population living in slums is &gt;30% (2022),"[source](https://www.statista.com/chart/35252/share-of-urban-population-living-in-slums/?srsltid=AfmBOoophyMA7Qy9aqi8FRA9lE-JY4tJubbaCq3cU3INEnauaIrHC46S)
+
+slum definition (UN): A slum household is defined as a group of individuals living under the same roof lacking one or more of the following conditions: access to improved water, access to improved sanitation, sufficient living area, durability of housing, and security of tenure.",0ea7329da2fd833bafe5663e5bd2b349b8db0b6a7c7b1c9b3f144245c9883cd5,30,0,0,23,scrape_reddit
+1pdp0fs,1764817763.0,reddit,competitor_mention,Dialog,AdmirableMixture5180,https://www.reddit.com/r/careeradvice/comments/1pdp0fs/would_you_follow_an_ig_account_that_featured_a/,Would you follow an IG account that featured a career that you may not know about but find interesting?,"want to support the generations to come and am trying to get an IG account launched to inspire them in their career endeavors. I never even knew my job existed and i could reach for and i want to pay it forward.
+
+if you have a moment to fill this out i would appreciate it. Names will NOT be used (or a fake one will).  This is less about you and more about your job 🙂
+
+[https://docs.google.com/forms/d/e/1FAIpQLSdJUFYhi-SHOD1f3km6f1cj3j6Wg-fDU2b20wswy78LszJjTg/viewform?usp=dialog](https://docs.goog",77f413ab7e05f86b481274c96c308b621ff979bce6e6e6797de291b1b788b357,1,0,0,0,scrape_reddit
+1pdotuo,1764817254.0,reddit,competitor_mention,Dialog,Objective_Comb_4632,https://www.reddit.com/r/Matchmaking/comments/1pdotuo/my_survey/,My Survey,[https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-\_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog),655a369efb3b2423e88d30501a8d9e207d52f04566a639dfeb4071aa9c165288,1,0,0,0,scrape_reddit
+1pdo9s2,1764815732.0,reddit,competitor_mention,Dialog,LlamaNinja3000,https://www.reddit.com/r/tipofmyjoystick/comments/1pdo9s2/mobile_2008_2015_old_school_game_i_played_on_my/,[Mobile] [2008 - 2015] Old school game I played on my dad's apple ipad as a kid.,"Help me find an old 3d 3RD Person school game I played when I was a kid. Early 2008 mobile game to 2015 timeframe probably?...I played it on an apple ipad my dad had with the white wide charger. The Game is not the one in the photo and is just a reference.
+
+Im honestly not even sure what the genere was. As far as I can recall it had no character customization, no dialog, and no clear goal. I think there might've been a timer maybe before other students started to chase you and beat your characte",a65227131c8e3e642a0cef157693e91c11075dbe7453de8073290bd12d054d24,1,0,0,0,scrape_reddit
+1pdo02t,1764814976.0,reddit,competitor_mention,Dialog,Gina-In-The-Hole,https://www.reddit.com/r/Brosona/comments/1pdo02t/a_test_compromised_of_my_otherwardly_glory/,A test compromised of MY otherwardly glory,link to the quiz: [https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg\_\_RUWTlIOhmvZdX2dKLMP8n\_VKQkw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg__RUWTlIOhmvZdX2dKLMP8n_VKQkw/viewform?usp=dialog),e81c9f352481cdf718571fce936cc123467202101d757bf30d73b878a38d7d73,4,0,0,13,scrape_reddit
+1pdnzp7,1764814946.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/AutismCertified/comments/1pdnzp7/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,0,0,0,5,scrape_reddit
+1pdnwfe,1764814691.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/autism/comments/1pdnwfe/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,3,0,0,3,scrape_reddit
+1pdnimt,1764813644.0,reddit,competitor_mention,Dialog,itamer,https://www.reddit.com/r/FarmMergeValley/comments/1pdnimt/i_just_realise_the_make_dialog_lets_me_jump/,I just realise the make dialog lets me jump between producers!,I knew those buttons at the bottom of the make dialog showed what else was being made but I didn’t realise I could use them to quickly make and claim from the other producers. It’ll only save seconds but worth it!,1c4c26de284181d2863e053647c88fe4030b2938359558c4ed5838664013bcbe,1,0,0,0,scrape_reddit
+1pdnh0q,1764813523.0,reddit,competitor_mention,Dialog,TheSuperGreatDoctor,https://www.reddit.com/r/diyelectronics/comments/1pdnh0q/seeking_diy_electronics_feedback_ai_robot_with/,Seeking DIY electronics feedback: AI robot with maker-friendly SDK and hardware extensibility,"Hi r/diyelectronics,
+
+We're building an AI agentic robot and want input from DIY electronics enthusiasts on whether the ""extensibility and modding"" approach would actually get used.
+
+Why this might interest you:
+
+* AI robot with SDK for building custom behaviors and hardware integrations
+* Modular design supporting Arduino/ESP32 sensor/actuator additions
+* Natural language + code hybrid programming
+* Community platform for sharing mods and integrations
+
+Current prototype: Desktop quadruped with ",92490993fc60ce2b9be9f077fce17138e383e9acca8a9a77a055303eb083c4d6,1,0,0,0,scrape_reddit
+1pdnsv1,1764814426.0,reddit,competitor_mention,SLT,Impossible-Button-82,https://www.reddit.com/r/ram_trucks/comments/1pdnsv1/best_budget_exhaust_setup_for_single_exit_ram/,Best Budget Exhaust Setup For Single Exit Ram 1500 5.7l Hemi,"I’ve got a 2011 Ram 1500 SLT with the 5.7l Hemi and the factory single exit exhaust. I’ve been trying to find an exhaust setup that will be loud with a deep tone and no rasp. All the setups I’m seeing are for trucks with factory dual exhausts. What setups are you guys with the factory single exit running? 
+
+Not trying to spend a ton of money on modifying the factory exhaust but I would spend more if anyone knows of a system that will give me dual split side exit tail pipes out the rear as well a",9e8deb2925bdc29563a125eb2cca4d0bfb0818fc6eca69eeee2ad94db1cf037d,2,0,0,3,scrape_reddit
+1pdmr45,1764811517.0,reddit,competitor_mention,SLT,Old-School8916,https://www.reddit.com/r/MapPorn/comments/1pdmr45/countries_where_percentage_of_urban_population/,Countries where percentage of urban population living in slums is &gt;30% (2022),"[source](https://www.statista.com/chart/35252/share-of-urban-population-living-in-slums/?srsltid=AfmBOoophyMA7Qy9aqi8FRA9lE-JY4tJubbaCq3cU3INEnauaIrHC46S)
+
+slum definition (UN): A slum household is defined as a group of individuals living under the same roof lacking one or more of the following conditions: access to improved water, access to improved sanitation, sufficient living area, durability of housing, and security of tenure.",0ea7329da2fd833bafe5663e5bd2b349b8db0b6a7c7b1c9b3f144245c9883cd5,30,0,0,23,scrape_reddit
+1pdpho1,1764819112.0,reddit,competitor_mention,Dialog,Shahzeb5,https://www.reddit.com/r/CheatingSurveys/comments/1pdpho1/i_would_really_appreciate_if_you_can_do_my_survey/,I would really appreciate if you can do my survey. (For a project),https://docs.google.com/forms/d/e/1FAIpQLSeWLk-mafxOE5C_SH_dKfr5IIfoPH0HU3Pu2h-Xa-h_S2SPVg/viewform?usp=dialog,ddf23cc767232aa99b505b60657e214c43b57213b1dc4e6c8061e04eab84fe2e,1,0,0,0,scrape_reddit
+1pdpdv2,1764818813.0,reddit,competitor_mention,Dialog,TrafficSuch5250,https://www.reddit.com/r/MakeNewFriendsHere/comments/1pdpdv2/40_f_comfy_goth_vamp_lf_comfy_friends_or/,40 F Comfy Goth vamp LF Comfy friends or interesting dialog :3,"
+
+Hi, ever wanted to talk to a vampire ? Ever wondered what existed in this world behind the veil of unknown? Hehe Wowie, sounds so cool, omg a vamp goth mommy I can’t believe it! Lul, it’s not like the movies or not :3. I guess you won’t really know what it’s like until you pull your confidence together and message me hehe.
+
+If you wanna ask me anything, or fan girl about vampires feel free to message me. Just keep in mind to be respectful and not rude if possible yes I do feed on consenting pe",908a0b548ee180bacc35bc23c23e05d269e067b3cf7fe0cf7c152ce011f0ecfb,0,0,0,1,scrape_reddit
+1pdp0fs,1764817763.0,reddit,competitor_mention,Dialog,AdmirableMixture5180,https://www.reddit.com/r/careeradvice/comments/1pdp0fs/would_you_follow_an_ig_account_that_featured_a/,Would you follow an IG account that featured a career that you may not know about but find interesting?,"want to support the generations to come and am trying to get an IG account launched to inspire them in their career endeavors. I never even knew my job existed and i could reach for and i want to pay it forward.
+
+if you have a moment to fill this out i would appreciate it. Names will NOT be used (or a fake one will).  This is less about you and more about your job 🙂
+
+[https://docs.google.com/forms/d/e/1FAIpQLSdJUFYhi-SHOD1f3km6f1cj3j6Wg-fDU2b20wswy78LszJjTg/viewform?usp=dialog](https://docs.goog",77f413ab7e05f86b481274c96c308b621ff979bce6e6e6797de291b1b788b357,1,0,0,0,scrape_reddit
+1pdotuo,1764817254.0,reddit,competitor_mention,Dialog,Objective_Comb_4632,https://www.reddit.com/r/Matchmaking/comments/1pdotuo/my_survey/,My Survey,[https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-\_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog),655a369efb3b2423e88d30501a8d9e207d52f04566a639dfeb4071aa9c165288,1,0,0,0,scrape_reddit
+1pdo9s2,1764815732.0,reddit,competitor_mention,Dialog,LlamaNinja3000,https://www.reddit.com/r/tipofmyjoystick/comments/1pdo9s2/mobile_2008_2015_old_school_game_i_played_on_my/,[Mobile] [2008 - 2015] Old school game I played on my dad's apple ipad as a kid.,"Help me find an old 3d 3RD Person school game I played when I was a kid. Early 2008 mobile game to 2015 timeframe probably?...I played it on an apple ipad my dad had with the white wide charger. The Game is not the one in the photo and is just a reference.
+
+Im honestly not even sure what the genere was. As far as I can recall it had no character customization, no dialog, and no clear goal. I think there might've been a timer maybe before other students started to chase you and beat your characte",a65227131c8e3e642a0cef157693e91c11075dbe7453de8073290bd12d054d24,1,0,0,0,scrape_reddit
+1pdo02t,1764814976.0,reddit,competitor_mention,Dialog,Gina-In-The-Hole,https://www.reddit.com/r/Brosona/comments/1pdo02t/a_test_compromised_of_my_otherwardly_glory/,A test compromised of MY otherwardly glory,link to the quiz: [https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg\_\_RUWTlIOhmvZdX2dKLMP8n\_VKQkw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg__RUWTlIOhmvZdX2dKLMP8n_VKQkw/viewform?usp=dialog),e81c9f352481cdf718571fce936cc123467202101d757bf30d73b878a38d7d73,4,0,0,13,scrape_reddit
+1pdnzp7,1764814946.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/AutismCertified/comments/1pdnzp7/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,0,0,0,5,scrape_reddit
+1pdnsv1,1764814426.0,reddit,competitor_mention,SLT,Impossible-Button-82,https://www.reddit.com/r/ram_trucks/comments/1pdnsv1/best_budget_exhaust_setup_for_single_exit_ram/,Best Budget Exhaust Setup For Single Exit Ram 1500 5.7l Hemi,"I’ve got a 2011 Ram 1500 SLT with the 5.7l Hemi and the factory single exit exhaust. I’ve been trying to find an exhaust setup that will be loud with a deep tone and no rasp. All the setups I’m seeing are for trucks with factory dual exhausts. What setups are you guys with the factory single exit running? 
+
+Not trying to spend a ton of money on modifying the factory exhaust but I would spend more if anyone knows of a system that will give me dual split side exit tail pipes out the rear as well a",9e8deb2925bdc29563a125eb2cca4d0bfb0818fc6eca69eeee2ad94db1cf037d,3,0,0,4,scrape_reddit
+1pdmr45,1764811517.0,reddit,competitor_mention,SLT,Old-School8916,https://www.reddit.com/r/MapPorn/comments/1pdmr45/countries_where_percentage_of_urban_population/,Countries where percentage of urban population living in slums is &gt;30% (2022),"[source](https://www.statista.com/chart/35252/share-of-urban-population-living-in-slums/?srsltid=AfmBOoophyMA7Qy9aqi8FRA9lE-JY4tJubbaCq3cU3INEnauaIrHC46S)
+
+slum definition (UN): A slum household is defined as a group of individuals living under the same roof lacking one or more of the following conditions: access to improved water, access to improved sanitation, sufficient living area, durability of housing, and security of tenure.",0ea7329da2fd833bafe5663e5bd2b349b8db0b6a7c7b1c9b3f144245c9883cd5,34,0,0,25,scrape_reddit
+1pdpho1,1764819112.0,reddit,competitor_mention,Dialog,Shahzeb5,https://www.reddit.com/r/CheatingSurveys/comments/1pdpho1/i_would_really_appreciate_if_you_can_do_my_survey/,I would really appreciate if you can do my survey. (For a project),https://docs.google.com/forms/d/e/1FAIpQLSeWLk-mafxOE5C_SH_dKfr5IIfoPH0HU3Pu2h-Xa-h_S2SPVg/viewform?usp=dialog,ddf23cc767232aa99b505b60657e214c43b57213b1dc4e6c8061e04eab84fe2e,1,0,0,0,scrape_reddit
+1pdpdv2,1764818813.0,reddit,competitor_mention,Dialog,TrafficSuch5250,https://www.reddit.com/r/MakeNewFriendsHere/comments/1pdpdv2/40_f_comfy_goth_vamp_lf_comfy_friends_or/,40 F Comfy Goth vamp LF Comfy friends or interesting dialog :3,"
+
+Hi, ever wanted to talk to a vampire ? Ever wondered what existed in this world behind the veil of unknown? Hehe Wowie, sounds so cool, omg a vamp goth mommy I can’t believe it! Lul, it’s not like the movies or not :3. I guess you won’t really know what it’s like until you pull your confidence together and message me hehe.
+
+If you wanna ask me anything, or fan girl about vampires feel free to message me. Just keep in mind to be respectful and not rude if possible yes I do feed on consenting pe",908a0b548ee180bacc35bc23c23e05d269e067b3cf7fe0cf7c152ce011f0ecfb,0,0,0,1,scrape_reddit
+1pdp0fs,1764817763.0,reddit,competitor_mention,Dialog,AdmirableMixture5180,https://www.reddit.com/r/careeradvice/comments/1pdp0fs/would_you_follow_an_ig_account_that_featured_a/,Would you follow an IG account that featured a career that you may not know about but find interesting?,"want to support the generations to come and am trying to get an IG account launched to inspire them in their career endeavors. I never even knew my job existed and i could reach for and i want to pay it forward.
+
+if you have a moment to fill this out i would appreciate it. Names will NOT be used (or a fake one will).  This is less about you and more about your job 🙂
+
+[https://docs.google.com/forms/d/e/1FAIpQLSdJUFYhi-SHOD1f3km6f1cj3j6Wg-fDU2b20wswy78LszJjTg/viewform?usp=dialog](https://docs.goog",77f413ab7e05f86b481274c96c308b621ff979bce6e6e6797de291b1b788b357,1,0,0,0,scrape_reddit
+1pdotuo,1764817254.0,reddit,competitor_mention,Dialog,Objective_Comb_4632,https://www.reddit.com/r/Matchmaking/comments/1pdotuo/my_survey/,My Survey,[https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-\_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog),655a369efb3b2423e88d30501a8d9e207d52f04566a639dfeb4071aa9c165288,1,0,0,0,scrape_reddit
+1pdo9s2,1764815732.0,reddit,competitor_mention,Dialog,LlamaNinja3000,https://www.reddit.com/r/tipofmyjoystick/comments/1pdo9s2/mobile_2008_2015_old_school_game_i_played_on_my/,[Mobile] [2008 - 2015] Old school game I played on my dad's apple ipad as a kid.,"Help me find an old 3d 3RD Person school game I played when I was a kid. Early 2008 mobile game to 2015 timeframe probably?...I played it on an apple ipad my dad had with the white wide charger. The Game is not the one in the photo and is just a reference.
+
+Im honestly not even sure what the genere was. As far as I can recall it had no character customization, no dialog, and no clear goal. I think there might've been a timer maybe before other students started to chase you and beat your characte",a65227131c8e3e642a0cef157693e91c11075dbe7453de8073290bd12d054d24,1,0,0,0,scrape_reddit
+1pdo02t,1764814976.0,reddit,competitor_mention,Dialog,Gina-In-The-Hole,https://www.reddit.com/r/Brosona/comments/1pdo02t/a_test_compromised_of_my_otherwardly_glory/,A test compromised of MY otherwardly glory,link to the quiz: [https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg\_\_RUWTlIOhmvZdX2dKLMP8n\_VKQkw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSdd3yRzh9nTGTeyZ27Gg__RUWTlIOhmvZdX2dKLMP8n_VKQkw/viewform?usp=dialog),e81c9f352481cdf718571fce936cc123467202101d757bf30d73b878a38d7d73,4,0,0,13,scrape_reddit
+1pdnzp7,1764814946.0,reddit,competitor_mention,Dialog,Personal-Net-2929,https://www.reddit.com/r/AutismCertified/comments/1pdnzp7/quick_survey_about_online_community_for_autistic/,Quick Survey About Online Community for Autistic Adults,"Hi everyone! I’m doing a project about how autistic adults use online spaces to connect with other people. I’m hoping to learn what makes these spaces feel welcoming, safe, and easier for self-expression compared to offline life.
+
+The survey is for autistic adults, diagnosed or self-identified. It takes around 8 to 12 minutes, and it’s totally anonymous. You can skip any question you want.
+
+If you’re willing to share your experiences, it would help me a lot. Thanks so much to anyone who decides ",7254041ad10e1a90cfe2b847540949b94039817c30c9946dbd209eaa368fa1b3,0,0,0,5,scrape_reddit
+1pdnsv1,1764814426.0,reddit,competitor_mention,SLT,Impossible-Button-82,https://www.reddit.com/r/ram_trucks/comments/1pdnsv1/best_budget_exhaust_setup_for_single_exit_ram/,Best Budget Exhaust Setup For Single Exit Ram 1500 5.7l Hemi,"I’ve got a 2011 Ram 1500 SLT with the 5.7l Hemi and the factory single exit exhaust. I’ve been trying to find an exhaust setup that will be loud with a deep tone and no rasp. All the setups I’m seeing are for trucks with factory dual exhausts. What setups are you guys with the factory single exit running? 
+
+Not trying to spend a ton of money on modifying the factory exhaust but I would spend more if anyone knows of a system that will give me dual split side exit tail pipes out the rear as well a",9e8deb2925bdc29563a125eb2cca4d0bfb0818fc6eca69eeee2ad94db1cf037d,3,0,0,4,scrape_reddit
+1pdmr45,1764811517.0,reddit,competitor_mention,SLT,Old-School8916,https://www.reddit.com/r/MapPorn/comments/1pdmr45/countries_where_percentage_of_urban_population/,Countries where percentage of urban population living in slums is &gt;30% (2022),"[source](https://www.statista.com/chart/35252/share-of-urban-population-living-in-slums/?srsltid=AfmBOoophyMA7Qy9aqi8FRA9lE-JY4tJubbaCq3cU3INEnauaIrHC46S)
+
+slum definition (UN): A slum household is defined as a group of individuals living under the same roof lacking one or more of the following conditions: access to improved water, access to improved sanitation, sufficient living area, durability of housing, and security of tenure.",0ea7329da2fd833bafe5663e5bd2b349b8db0b6a7c7b1c9b3f144245c9883cd5,34,0,0,25,scrape_reddit
+1pdptjk,1764820048.0,reddit,competitor_mention,Dialog,skychan2,https://www.reddit.com/r/Tormenta_20/comments/1pdptjk/guerra_artoniana/,Guerra Artoniana,https://docs.google.com/forms/d/e/1FAIpQLScBaP6G-KDr5U9TielGUPp87wWPIr-Fh8c9kSihIOfLwVxpaQ/viewform?usp=dialog,b7461c727966db9b917d168b2dd343ecb065bad1af672fcb1bcbb0daf7ba8869,1,0,0,0,scrape_reddit
+1pdpsxj,1764820002.0,reddit,competitor_mention,Dialog,skychan2,https://www.reddit.com/r/Tormenta/comments/1pdpsxj/guerra_artoniana/,Guerra Artoniana,https://docs.google.com/forms/d/e/1FAIpQLScBaP6G-KDr5U9TielGUPp87wWPIr-Fh8c9kSihIOfLwVxpaQ/viewform?usp=dialog,b7461c727966db9b917d168b2dd343ecb065bad1af672fcb1bcbb0daf7ba8869,1,0,0,0,scrape_reddit
+1pdpho1,1764819112.0,reddit,competitor_mention,Dialog,Shahzeb5,https://www.reddit.com/r/CheatingSurveys/comments/1pdpho1/i_would_really_appreciate_if_you_can_do_my_survey/,I would really appreciate if you can do my survey. (For a project),https://docs.google.com/forms/d/e/1FAIpQLSeWLk-mafxOE5C_SH_dKfr5IIfoPH0HU3Pu2h-Xa-h_S2SPVg/viewform?usp=dialog,ddf23cc767232aa99b505b60657e214c43b57213b1dc4e6c8061e04eab84fe2e,1,0,0,0,scrape_reddit
+1pdpdv2,1764818813.0,reddit,competitor_mention,Dialog,TrafficSuch5250,https://www.reddit.com/r/MakeNewFriendsHere/comments/1pdpdv2/40_f_comfy_goth_vamp_lf_comfy_friends_or/,40 F Comfy Goth vamp LF Comfy friends or interesting dialog :3,"
+
+Hi, ever wanted to talk to a vampire ? Ever wondered what existed in this world behind the veil of unknown? Hehe Wowie, sounds so cool, omg a vamp goth mommy I can’t believe it! Lul, it’s not like the movies or not :3. I guess you won’t really know what it’s like until you pull your confidence together and message me hehe.
+
+If you wanna ask me anything, or fan girl about vampires feel free to message me. Just keep in mind to be respectful and not rude if possible yes I do feed on consenting pe",908a0b548ee180bacc35bc23c23e05d269e067b3cf7fe0cf7c152ce011f0ecfb,0,0,0,1,scrape_reddit
+1pdp0fs,1764817763.0,reddit,competitor_mention,Dialog,AdmirableMixture5180,https://www.reddit.com/r/careeradvice/comments/1pdp0fs/would_you_follow_an_ig_account_that_featured_a/,Would you follow an IG account that featured a career that you may not know about but find interesting?,"want to support the generations to come and am trying to get an IG account launched to inspire them in their career endeavors. I never even knew my job existed and i could reach for and i want to pay it forward.
+
+if you have a moment to fill this out i would appreciate it. Names will NOT be used (or a fake one will).  This is less about you and more about your job 🙂
+
+[https://docs.google.com/forms/d/e/1FAIpQLSdJUFYhi-SHOD1f3km6f1cj3j6Wg-fDU2b20wswy78LszJjTg/viewform?usp=dialog](https://docs.goog",77f413ab7e05f86b481274c96c308b621ff979bce6e6e6797de291b1b788b357,1,0,0,0,scrape_reddit
+1pdotuo,1764817254.0,reddit,competitor_mention,Dialog,Objective_Comb_4632,https://www.reddit.com/r/Matchmaking/comments/1pdotuo/my_survey/,My Survey,[https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-\_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog),655a369efb3b2423e88d30501a8d9e207d52f04566a639dfeb4071aa9c165288,1,0,0,0,scrape_reddit
+1pdnsv1,1764814426.0,reddit,competitor_mention,SLT,Impossible-Button-82,https://www.reddit.com/r/ram_trucks/comments/1pdnsv1/best_budget_exhaust_setup_for_single_exit_ram/,Best Budget Exhaust Setup For Single Exit Ram 1500 5.7l Hemi,"I’ve got a 2011 Ram 1500 SLT with the 5.7l Hemi and the factory single exit exhaust. I’ve been trying to find an exhaust setup that will be loud with a deep tone and no rasp. All the setups I’m seeing are for trucks with factory dual exhausts. What setups are you guys with the factory single exit running? 
+
+Not trying to spend a ton of money on modifying the factory exhaust but I would spend more if anyone knows of a system that will give me dual split side exit tail pipes out the rear as well a",9e8deb2925bdc29563a125eb2cca4d0bfb0818fc6eca69eeee2ad94db1cf037d,3,0,0,6,scrape_reddit
+1pdmr45,1764811517.0,reddit,competitor_mention,SLT,Old-School8916,https://www.reddit.com/r/MapPorn/comments/1pdmr45/countries_where_percentage_of_urban_population/,Countries where percentage of urban population living in slums is &gt;30% (2022),"[source](https://www.statista.com/chart/35252/share-of-urban-population-living-in-slums/?srsltid=AfmBOoophyMA7Qy9aqi8FRA9lE-JY4tJubbaCq3cU3INEnauaIrHC46S)
+
+slum definition (UN): A slum household is defined as a group of individuals living under the same roof lacking one or more of the following conditions: access to improved water, access to improved sanitation, sufficient living area, durability of housing, and security of tenure.",0ea7329da2fd833bafe5663e5bd2b349b8db0b6a7c7b1c9b3f144245c9883cd5,34,0,0,29,scrape_reddit
+1pdptjk,1764820048.0,reddit,competitor_mention,Dialog,skychan2,https://www.reddit.com/r/Tormenta_20/comments/1pdptjk/guerra_artoniana/,Guerra Artoniana,https://docs.google.com/forms/d/e/1FAIpQLScBaP6G-KDr5U9TielGUPp87wWPIr-Fh8c9kSihIOfLwVxpaQ/viewform?usp=dialog,b7461c727966db9b917d168b2dd343ecb065bad1af672fcb1bcbb0daf7ba8869,1,0,0,0,scrape_reddit
+1pdpsxj,1764820002.0,reddit,competitor_mention,Dialog,skychan2,https://www.reddit.com/r/Tormenta/comments/1pdpsxj/guerra_artoniana/,Guerra Artoniana,https://docs.google.com/forms/d/e/1FAIpQLScBaP6G-KDr5U9TielGUPp87wWPIr-Fh8c9kSihIOfLwVxpaQ/viewform?usp=dialog,b7461c727966db9b917d168b2dd343ecb065bad1af672fcb1bcbb0daf7ba8869,1,0,0,0,scrape_reddit
+1pdpho1,1764819112.0,reddit,competitor_mention,Dialog,Shahzeb5,https://www.reddit.com/r/CheatingSurveys/comments/1pdpho1/i_would_really_appreciate_if_you_can_do_my_survey/,I would really appreciate if you can do my survey. (For a project),https://docs.google.com/forms/d/e/1FAIpQLSeWLk-mafxOE5C_SH_dKfr5IIfoPH0HU3Pu2h-Xa-h_S2SPVg/viewform?usp=dialog,ddf23cc767232aa99b505b60657e214c43b57213b1dc4e6c8061e04eab84fe2e,1,0,0,0,scrape_reddit
+1pdpdv2,1764818813.0,reddit,competitor_mention,Dialog,TrafficSuch5250,https://www.reddit.com/r/MakeNewFriendsHere/comments/1pdpdv2/40_f_comfy_goth_vamp_lf_comfy_friends_or/,40 F Comfy Goth vamp LF Comfy friends or interesting dialog :3,"
+
+Hi, ever wanted to talk to a vampire ? Ever wondered what existed in this world behind the veil of unknown? Hehe Wowie, sounds so cool, omg a vamp goth mommy I can’t believe it! Lul, it’s not like the movies or not :3. I guess you won’t really know what it’s like until you pull your confidence together and message me hehe.
+
+If you wanna ask me anything, or fan girl about vampires feel free to message me. Just keep in mind to be respectful and not rude if possible yes I do feed on consenting pe",908a0b548ee180bacc35bc23c23e05d269e067b3cf7fe0cf7c152ce011f0ecfb,0,0,0,1,scrape_reddit
+1pdp0fs,1764817763.0,reddit,competitor_mention,Dialog,AdmirableMixture5180,https://www.reddit.com/r/careeradvice/comments/1pdp0fs/would_you_follow_an_ig_account_that_featured_a/,Would you follow an IG account that featured a career that you may not know about but find interesting?,"want to support the generations to come and am trying to get an IG account launched to inspire them in their career endeavors. I never even knew my job existed and i could reach for and i want to pay it forward.
+
+if you have a moment to fill this out i would appreciate it. Names will NOT be used (or a fake one will).  This is less about you and more about your job 🙂
+
+[https://docs.google.com/forms/d/e/1FAIpQLSdJUFYhi-SHOD1f3km6f1cj3j6Wg-fDU2b20wswy78LszJjTg/viewform?usp=dialog](https://docs.goog",77f413ab7e05f86b481274c96c308b621ff979bce6e6e6797de291b1b788b357,1,0,0,0,scrape_reddit
+1pdotuo,1764817254.0,reddit,competitor_mention,Dialog,Objective_Comb_4632,https://www.reddit.com/r/Matchmaking/comments/1pdotuo/my_survey/,My Survey,[https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-\_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog](https://docs.google.com/forms/d/e/1FAIpQLSfrG8uolCQLxF-_dWINOfUYehoyO5Pyh9F13UEPdHV4hxe1Yw/viewform?usp=dialog),655a369efb3b2423e88d30501a8d9e207d52f04566a639dfeb4071aa9c165288,1,0,0,0,scrape_reddit
+1pdnsv1,1764814426.0,reddit,competitor_mention,SLT,Impossible-Button-82,https://www.reddit.com/r/ram_trucks/comments/1pdnsv1/best_budget_exhaust_setup_for_single_exit_ram/,Best Budget Exhaust Setup For Single Exit Ram 1500 5.7l Hemi,"I’ve got a 2011 Ram 1500 SLT with the 5.7l Hemi and the factory single exit exhaust. I’ve been trying to find an exhaust setup that will be loud with a deep tone and no rasp. All the setups I’m seeing are for trucks with factory dual exhausts. What setups are you guys with the factory single exit running? 
+
+Not trying to spend a ton of money on modifying the factory exhaust but I would spend more if anyone knows of a system that will give me dual split side exit tail pipes out the rear as well a",9e8deb2925bdc29563a125eb2cca4d0bfb0818fc6eca69eeee2ad94db1cf037d,3,0,0,6,scrape_reddit
+1pdmr45,1764811517.0,reddit,competitor_mention,SLT,Old-School8916,https://www.reddit.com/r/MapPorn/comments/1pdmr45/countries_where_percentage_of_urban_population/,Countries where percentage of urban population living in slums is &gt;30% (2022),"[source](https://www.statista.com/chart/35252/share-of-urban-population-living-in-slums/?srsltid=AfmBOoophyMA7Qy9aqi8FRA9lE-JY4tJubbaCq3cU3INEnauaIrHC46S)
+
+slum definition (UN): A slum household is defined as a group of individuals living under the same roof lacking one or more of the following conditions: access to improved water, access to improved sanitation, sufficient living area, durability of housing, and security of tenure.",0ea7329da2fd833bafe5663e5bd2b349b8db0b6a7c7b1c9b3f144245c9883cd5,34,0,0,29,scrape_reddit
+1pdsbi1,1764827801.0,reddit,competitor_mention,Dialog,Designer_Waltz8174,https://www.reddit.com/r/FortniteCreative/comments/1pdsbi1/access_popup_dialog_devices_widget_in_verse/,access popup dialog device’s widget in verse,is there any way to access the popup device widget in verse so i can change its variables? (verse fields),e7e21a0e825132d76d2be37d0df87cf17aa7a81ae885e7fc76dd387c19bb4903,1,0,0,0,scrape_reddit
+1pdrq91,1764825902.0,reddit,competitor_mention,Dialog,bodaciousvibes,https://www.reddit.com/r/LordofTheMysteries/comments/1pdrq91/lotm_v1_webnovel_vs_yen_press_localization/,[LotM V1] Webnovel vs. Yen Press Localization,"https://preview.redd.it/3gxeybbhg45g1.png?width=1081&amp;format=png&amp;auto=webp&amp;s=11701ffe9d039bd0d83a09ccd9bfbc6f130d8d16
+
+Hey everyone, like (hopefully) many others, I recently finished Book 1 after watching the donghua. I started with Yen Press’s vol 1 publication and binged the rest of the Webnovel translation over the past month. I noticed that between the original Webnovel translation and Yen Press, that there were a fair amount of localization and translation changes. The former vas",7af230a953acde12c7ceea2877bf8c3884cf9d12bd978a9ae5098d4d002f4c77,4,0,0,2,scrape_reddit
+1pdr1wg,1764823812.0,reddit,competitor_mention,Dialog,Fozzee-NZ1976,https://www.reddit.com/r/nzfootball/comments/1pdr1wg/free_live_qa_with_all_white_auckland_fc_winger/,Free Live Q&amp;A with All White &amp; Auckland FC winger Jesse Randall – Jan 25 (Limited Spots),"https://preview.redd.it/yiz04rv5b45g1.png?width=1485&amp;format=png&amp;auto=webp&amp;s=3071afd2e2c5dc5cfcd9153a79d09370f1137b1f
+
+Hey all — just wanted to share something special for the Auckland FC / All Whites community.
+
+We’re hosting a **free live Fan Call + Q&amp;A** with **Jesse Randall** (All Whites + Auckland FC winger) on:
+
+🗓 **Saturday 25 January**  
+⏰ **7:00pm NZDT**  
+💻 **Live on Zoom + YouTube**  
+🎟 **Limited spots** to keep it interactive
+
+This session goes behind the scenes with J",29f842db97623a8c62d54ca99a39f696a996b2b0067fd48c426e1183dbc8c43e,3,0,0,0,scrape_reddit
+1pdqugv,1764823166.0,reddit,competitor_mention,Dialog,TygerJamez1899,https://www.reddit.com/r/Undertale/comments/1pdqugv/ive_got_a_theory_about_the_save_points_in_le/,I've got a theory about the save points in le Deltarune,"So, you know how before you save for the first time, the save files has Kris's name on it? It feels weirdly important that you erase their save. I have a theory there's going to be a secret ending (or Gooster dialog at the end) if you never save and keep Kris the owner of the save.
+
+It's farfetched, I know, but Toby's add dialog for when you beat the game without getting achievements. It's not impossible. 
+
+(Not enough KARMA to post in r/deltarune yet)",5f8dd0960f03f9c137f2e51bbce70d2677dec3d24572054ea20f9ff1c459ba9b,28,0,0,11,scrape_reddit
+1pdsbi1,1764827801.0,reddit,competitor_mention,Dialog,Designer_Waltz8174,https://www.reddit.com/r/FortniteCreative/comments/1pdsbi1/access_popup_dialog_devices_widget_in_verse/,access popup dialog device’s widget in verse,is there any way to access the popup device widget in verse so i can change its variables? (verse fields),e7e21a0e825132d76d2be37d0df87cf17aa7a81ae885e7fc76dd387c19bb4903,1,0,0,0,scrape_reddit
+1pdrq91,1764825902.0,reddit,competitor_mention,Dialog,bodaciousvibes,https://www.reddit.com/r/LordofTheMysteries/comments/1pdrq91/lotm_v1_webnovel_vs_yen_press_localization/,[LotM V1] Webnovel vs. Yen Press Localization,"https://preview.redd.it/3gxeybbhg45g1.png?width=1081&amp;format=png&amp;auto=webp&amp;s=11701ffe9d039bd0d83a09ccd9bfbc6f130d8d16
+
+Hey everyone, like (hopefully) many others, I recently finished Book 1 after watching the donghua. I started with Yen Press’s vol 1 publication and binged the rest of the Webnovel translation over the past month. I noticed that between the original Webnovel translation and Yen Press, that there were a fair amount of localization and translation changes. The former vas",7af230a953acde12c7ceea2877bf8c3884cf9d12bd978a9ae5098d4d002f4c77,4,0,0,2,scrape_reddit
+1pdr1wg,1764823812.0,reddit,competitor_mention,Dialog,Fozzee-NZ1976,https://www.reddit.com/r/nzfootball/comments/1pdr1wg/free_live_qa_with_all_white_auckland_fc_winger/,Free Live Q&amp;A with All White &amp; Auckland FC winger Jesse Randall – Jan 25 (Limited Spots),"https://preview.redd.it/yiz04rv5b45g1.png?width=1485&amp;format=png&amp;auto=webp&amp;s=3071afd2e2c5dc5cfcd9153a79d09370f1137b1f
+
+Hey all — just wanted to share something special for the Auckland FC / All Whites community.
+
+We’re hosting a **free live Fan Call + Q&amp;A** with **Jesse Randall** (All Whites + Auckland FC winger) on:
+
+🗓 **Saturday 25 January**  
+⏰ **7:00pm NZDT**  
+💻 **Live on Zoom + YouTube**  
+🎟 **Limited spots** to keep it interactive
+
+This session goes behind the scenes with J",29f842db97623a8c62d54ca99a39f696a996b2b0067fd48c426e1183dbc8c43e,3,0,0,0,scrape_reddit
+1pdqugv,1764823166.0,reddit,competitor_mention,Dialog,TygerJamez1899,https://www.reddit.com/r/Undertale/comments/1pdqugv/ive_got_a_theory_about_the_save_points_in_le/,I've got a theory about the save points in le Deltarune,"So, you know how before you save for the first time, the save files has Kris's name on it? It feels weirdly important that you erase their save. I have a theory there's going to be a secret ending (or Gooster dialog at the end) if you never save and keep Kris the owner of the save.
+
+It's farfetched, I know, but Toby's add dialog for when you beat the game without getting achievements. It's not impossible. 
+
+(Not enough KARMA to post in r/deltarune yet)",5f8dd0960f03f9c137f2e51bbce70d2677dec3d24572054ea20f9ff1c459ba9b,28,0,0,11,scrape_reddit
+1pdt3gj,1764830472.0,reddit,competitor_mention,Dialog,One-Ice7086,https://www.reddit.com/r/artificial/comments/1pdt3gj/built_a_small_conversational_ai/,Built a small conversational AI experiment….unexpected user responses,"I made a simple conversational AI to test dialogue handling and shared it with a few people. What surprised me is how quickly they started having long, emotionally heavy conversations with it instead of just testing features.
+Is this kind of high-emotion engagement common with conversational agents?
+Curious if others building dialog systems have seen the same pattern.",e30825dcd0dfc8352086aad838854d0f1b7253138eaef6072cfea1d4f83f3ca6,1,0,0,0,scrape_reddit
+1pdsw39,1764829778.0,reddit,competitor_mention,Dialog,ThrowawayLukasSee,https://www.reddit.com/r/beziehungen/comments/1pdsw39/ich_m36_bin_unfähig_ein_gespräch_über_meine/,Ich [M36] bin unfähig ein Gespräch über meine Emotionen mit meiner Frau [F35] zu beginnen - jeder Versuch führt zu Streit,"Während es mir generell relativ leicht fällt über Gefühle zu sprechen, die Gefühle meiner Frau zu erkennen und zu verstehen und ich sogar meine eigenen Gefühle gut einschätzen kann, ist es mir vollkommen unmöglich eine Unterhaltung über meine (negativen) Gefühle zu beginnen, ohne dass wir streiten.
+
+Meine Frau und ich sind seit inzwischen 13 Jahren zusammen, haben 3 Kinder und insgesamt eine stabile und glückliche Beziehung. 
+
+Insbesondere meine Frau ist sehr stolz darauf, dass unsere Beziehung ",c896e76cc34566313f64a571cb5c1b9ca6a392d0ecc6a1794390e64366a22eb5,4,0,0,5,scrape_reddit
+1pdsps3,1764829147.0,reddit,competitor_mention,Dialog,Twopumptimmy,https://www.reddit.com/r/Bannerlord/comments/1pdsps3/help_me_marry_my_son_to_a_strong_woman/,Help me marry my son to a strong woman,"Hello! I seem to remember there was a dialog option of proposing an alliance through marriage or something similar if I wanted my son or daughter to marry someone in another clan. I saw a Aserai clan had some beefed out daughters with 200+ bow and two handed so I wanted my son to marry one of them. 
+
+I can't for the life of me find this dialog option anywhere. I have tried with allies, clan leaders in my own kingdom, enemy clan leaders and random nobles I meet around and nobody seems to have it.",196bf7db55182954fbf679225ad8d127bf1e0259793035c532d2a8c9ac0df8d2,1,0,0,3,scrape_reddit
+1pdsnyn,1764828968.0,reddit,competitor_mention,Dialog,ecoreck,https://www.reddit.com/r/sailormoon/comments/1pdsnyn/what_if_the_90s_dub_of_sailor_moon_used_the/,What if the 90s Dub of Sailor Moon used the original soundtrack?,"I've always wondered how the episodes would be if DiC used the original score instead of their own score but the same dialog still.
+
+After splicing the voices/music from both versions (and A LOT of editing), I took episode 24 for a spin. Here is a preview of the last 4 minutes of the episode and I think it came out very well and the emotions/feel still comes off the same to me. Thoughts?
+
+I wasn't sure if this is breaks a specific rule, and if it does please remove this thread and sorry mods.
+
+ ",42015daa281644bf4864046cf1b79c1d01b8ae73ecd1d61a420fe5cb2005a05d,1,0,0,1,scrape_reddit
+1pdsm70,1764828797.0,reddit,competitor_mention,Dialog,phord,https://www.reddit.com/r/kde/comments/1pdsm70/how_is_fingerprint_unlock_supported_without/,How is fingerprint unlock supported without configuration in pam?,"I configured fingerprints last week on my new laptop with the intention of enabling them in /etc/pam.d config somewhere, but I never got around to it.  Today I noticed the unlock dialog offered to let me **unlock** with a fingerprint.
+
+How is this achieved? I gather *something* is invoking the fprintd service directly, but what is it? kscreenlocker?  Pam.d directly?  I can't find any fprintd configs in /etc/pam.d.  I did find the *Fingerprint Authentication Daemon* but I'm not sure how it is inv",44ec938f34393c3245be8d207e7344b0e3770e0558a3305546326cd51b2d5640,1,0,0,1,scrape_reddit
+bf67e0781c02959d,2025-12-04T06:42:32.487116,facebook,profile_monitoring,SLTMobitel,SLTMobitel,https://www.facebook.com/SLTMobitel,,"Celebrating the heroes who kept the nation connected!
+Thank you for your unfailing dedication and commitment.
+#SLTMobitel #TheConnection #KeepingSriLankaConnected",bf67e0781c02959db5052bdd8bfe763b2c6f4d8a49e468d26e4790ef9716ecea,0,0,0,0,scrape_facebook_profile
+19c9be858ab0db80,2025-12-04T06:42:32.823075,facebook,profile_monitoring,SLTMobitel,SLTMobitel,https://www.facebook.com/SLTMobitel,,"300% ක් වැඩි වාසි දෙන MOBITEL 1598 Package එකට ඔබත් අදම connect වන්න!
+TikTok, Netflix, Spotify, Facebook, YouTube, Instagram, WhatsApp, Messenger සහ FaceTime ඇතුළු ඔබේ ප්‍රියතම Social Media Apps 9 සඳහා NONSTOP DATA, ඊට අමතරව 40GB Extra Anytime DATA!
+තව ඕනෑම ජාලයකට Unlimited Calls සමඟ SMS 1000 ක් රුපියල් 1,598 කට...
+👉 වැඩි විස්තර සඳහා : https://l.ead.me/mobitel1598
+#Mobitel #Mobitel1598 #NonstopDATA #UnlimitedCalls #TikTok #Netflix #Spotify",19c9be858ab0db803faa561f8a28b2e75c7b6e4e2bb198cb7dfa55c78035207d,0,0,0,0,scrape_facebook_profile
+68763b7d3d30ea53,2025-12-04T06:42:33.165033,facebook,profile_monitoring,SLTMobitel,SLTMobitel,https://www.facebook.com/SLTMobitel,,"රට පුරා යන SLTMobitel Fibre Rush ට්‍රක් එකත් එක්ක එකතු වෙලා 20GB දිනාගන්න ඔබටත් අවස්ථාවක්... ඔබේ නගරයට පැමිණෙ Fibre Rush ට්‍රක් එකේ Photo booth එකට ගිහින් ඔයාග‍ේ Photo එකක් අරගෙන මේ Post එකට #SLTMobitel #FiberRush #location හෑෂ් ටැග් Add කරලා Photo comment එකක් දාන ගමන් Page එක Follow කරන්න. දිනුම් ඇඳීමෙන් තෝරාගන්න ජයග්‍රාහකයන්ට 20GBක් ලබාදෙන්න SLTMobitel අපි සූදානම්.
+*කොන්දේසි සහිතයි
+#SLTMobitel #FibreRush #LimitedOffer",68763b7d3d30ea5394ee8aec9541e6fa4c865903fc7fd62fddf5efdc8b5d8b18,0,0,0,0,scrape_facebook_profile
+20f08d6ae177c3da,2025-12-04T06:42:33.495801,facebook,profile_monitoring,SLTMobitel,Online status indicator,https://www.facebook.com/SLTMobitel,,"අයහපත් කාලගුණ තත්වය හේතුවෙන් අසරණ වූ අපේම ජනතාව වෙනුවෙන් SLTMobitel වෙතින් ක්‍රියාත්මක කල සබැඳියාවේ සත්කාරය...
+#SLTMobitel #TheConnection #KeepingSriLankaConnected",20f08d6ae177c3da2ee8cf29614c94b3d42167ffe82d3dca667745d5320d9561,0,0,0,0,scrape_facebook_profile
+1pdt3gj,1764830472.0,reddit,competitor_mention,Dialog,One-Ice7086,https://www.reddit.com/r/artificial/comments/1pdt3gj/built_a_small_conversational_ai/,Built a small conversational AI experiment….unexpected user responses,"I made a simple conversational AI to test dialogue handling and shared it with a few people. What surprised me is how quickly they started having long, emotionally heavy conversations with it instead of just testing features.
+Is this kind of high-emotion engagement common with conversational agents?
+Curious if others building dialog systems have seen the same pattern.",e30825dcd0dfc8352086aad838854d0f1b7253138eaef6072cfea1d4f83f3ca6,1,0,0,0,scrape_reddit
+1pdsw39,1764829778.0,reddit,competitor_mention,Dialog,ThrowawayLukasSee,https://www.reddit.com/r/beziehungen/comments/1pdsw39/ich_m36_bin_unfähig_ein_gespräch_über_meine/,Ich [M36] bin unfähig ein Gespräch über meine Emotionen mit meiner Frau [F35] zu beginnen - jeder Versuch führt zu Streit,"Während es mir generell relativ leicht fällt über Gefühle zu sprechen, die Gefühle meiner Frau zu erkennen und zu verstehen und ich sogar meine eigenen Gefühle gut einschätzen kann, ist es mir vollkommen unmöglich eine Unterhaltung über meine (negativen) Gefühle zu beginnen, ohne dass wir streiten.
+
+Meine Frau und ich sind seit inzwischen 13 Jahren zusammen, haben 3 Kinder und insgesamt eine stabile und glückliche Beziehung. 
+
+Insbesondere meine Frau ist sehr stolz darauf, dass unsere Beziehung ",c896e76cc34566313f64a571cb5c1b9ca6a392d0ecc6a1794390e64366a22eb5,4,0,0,5,scrape_reddit
+1pdsps3,1764829147.0,reddit,competitor_mention,Dialog,Twopumptimmy,https://www.reddit.com/r/Bannerlord/comments/1pdsps3/help_me_marry_my_son_to_a_strong_woman/,Help me marry my son to a strong woman,"Hello! I seem to remember there was a dialog option of proposing an alliance through marriage or something similar if I wanted my son or daughter to marry someone in another clan. I saw a Aserai clan had some beefed out daughters with 200+ bow and two handed so I wanted my son to marry one of them. 
+
+I can't for the life of me find this dialog option anywhere. I have tried with allies, clan leaders in my own kingdom, enemy clan leaders and random nobles I meet around and nobody seems to have it.",196bf7db55182954fbf679225ad8d127bf1e0259793035c532d2a8c9ac0df8d2,1,0,0,3,scrape_reddit
+1pdsnyn,1764828968.0,reddit,competitor_mention,Dialog,ecoreck,https://www.reddit.com/r/sailormoon/comments/1pdsnyn/what_if_the_90s_dub_of_sailor_moon_used_the/,What if the 90s Dub of Sailor Moon used the original soundtrack?,"I've always wondered how the episodes would be if DiC used the original score instead of their own score but the same dialog still.
+
+After splicing the voices/music from both versions (and A LOT of editing), I took episode 24 for a spin. Here is a preview of the last 4 minutes of the episode and I think it came out very well and the emotions/feel still comes off the same to me. Thoughts?
+
+I wasn't sure if this is breaks a specific rule, and if it does please remove this thread and sorry mods.
+
+ ",42015daa281644bf4864046cf1b79c1d01b8ae73ecd1d61a420fe5cb2005a05d,1,0,0,1,scrape_reddit
+1pdsm70,1764828797.0,reddit,competitor_mention,Dialog,phord,https://www.reddit.com/r/kde/comments/1pdsm70/how_is_fingerprint_unlock_supported_without/,How is fingerprint unlock supported without configuration in pam?,"I configured fingerprints last week on my new laptop with the intention of enabling them in /etc/pam.d config somewhere, but I never got around to it.  Today I noticed the unlock dialog offered to let me **unlock** with a fingerprint.
+
+How is this achieved? I gather *something* is invoking the fprintd service directly, but what is it? kscreenlocker?  Pam.d directly?  I can't find any fprintd configs in /etc/pam.d.  I did find the *Fingerprint Authentication Daemon* but I'm not sure how it is inv",44ec938f34393c3245be8d207e7344b0e3770e0558a3305546326cd51b2d5640,1,0,0,1,scrape_reddit
+bf67e0781c02959d,2025-12-04T06:42:36.032673,facebook,profile_monitoring,SLTMobitel,SLTMobitel,https://www.facebook.com/SLTMobitel,,"Celebrating the heroes who kept the nation connected!
+Thank you for your unfailing dedication and commitment.
+#SLTMobitel #TheConnection #KeepingSriLankaConnected",bf67e0781c02959db5052bdd8bfe763b2c6f4d8a49e468d26e4790ef9716ecea,0,0,0,0,scrape_facebook_profile
+19c9be858ab0db80,2025-12-04T06:42:36.672238,facebook,profile_monitoring,SLTMobitel,SLTMobitel,https://www.facebook.com/SLTMobitel,,"300% ක් වැඩි වාසි දෙන MOBITEL 1598 Package එකට ඔබත් අදම connect වන්න!
+TikTok, Netflix, Spotify, Facebook, YouTube, Instagram, WhatsApp, Messenger සහ FaceTime ඇතුළු ඔබේ ප්‍රියතම Social Media Apps 9 සඳහා NONSTOP DATA, ඊට අමතරව 40GB Extra Anytime DATA!
+තව ඕනෑම ජාලයකට Unlimited Calls සමඟ SMS 1000 ක් රුපියල් 1,598 කට...
+👉 වැඩි විස්තර සඳහා : https://l.ead.me/mobitel1598
+#Mobitel #Mobitel1598 #NonstopDATA #UnlimitedCalls #TikTok #Netflix #Spotify",19c9be858ab0db803faa561f8a28b2e75c7b6e4e2bb198cb7dfa55c78035207d,0,0,0,0,scrape_facebook_profile
+68763b7d3d30ea53,2025-12-04T06:42:37.113068,facebook,profile_monitoring,SLTMobitel,SLTMobitel,https://www.facebook.com/SLTMobitel,,"රට පුරා යන SLTMobitel Fibre Rush ට්‍රක් එකත් එක්ක එකතු වෙලා 20GB දිනාගන්න ඔබටත් අවස්ථාවක්... ඔබේ නගරයට පැමිණෙ Fibre Rush ට්‍රක් එකේ Photo booth එකට ගිහින් ඔයාග‍ේ Photo එකක් අරගෙන මේ Post එකට #SLTMobitel #FiberRush #location හෑෂ් ටැග් Add කරලා Photo comment එකක් දාන ගමන් Page එක Follow කරන්න. දිනුම් ඇඳීමෙන් තෝරාගන්න ජයග්‍රාහකයන්ට 20GBක් ලබාදෙන්න SLTMobitel අපි සූදානම්.
+*කොන්දේසි සහිතයි
+#SLTMobitel #FibreRush #LimitedOffer",68763b7d3d30ea5394ee8aec9541e6fa4c865903fc7fd62fddf5efdc8b5d8b18,0,0,0,0,scrape_facebook_profile
+20f08d6ae177c3da,2025-12-04T06:42:37.511599,facebook,profile_monitoring,SLTMobitel,Online status indicator,https://www.facebook.com/SLTMobitel,,"අයහපත් කාලගුණ තත්වය හේතුවෙන් අසරණ වූ අපේම ජනතාව වෙනුවෙන් SLTMobitel වෙතින් ක්‍රියාත්මක කල සබැඳියාවේ සත්කාරය...
+#SLTMobitel #TheConnection #KeepingSriLankaConnected",20f08d6ae177c3da2ee8cf29614c94b3d42167ffe82d3dca667745d5320d9561,0,0,0,0,scrape_facebook_profile
+1pdtn4e,1764832442.0,reddit,competitor_mention,Dialog,Exiled1989,https://www.reddit.com/r/wow/comments/1pdtn4e/deck_dismay_bugged_with_1127/,Deck Dismay bugged with 11.2.7,"Hey guys,
+I waited weeks for A Birds Tail and The Show Must Go On anniversary quests to get fixed, only to not be able to complete the achievement because the Deck Dismay quests cannot be started.
+
+Lorenzo doesnt have the dialog necessary that gives the quest....",7c69255858cb6763fdd308999a0214aed44019f3923961f0f7a7f037e7f2a506,1,0,0,0,scrape_reddit
+1pdtj7u,1764832035.0,reddit,competitor_mention,Dialog,vrn123,https://www.reddit.com/r/srilanka/comments/1pdtj7u/is_it_just_me_dialog_super_slow_in_colombo/,Is it just me? Dialog super slow in Colombo.,"https://preview.redd.it/q7h66kxiz45g1.png?width=408&amp;format=png&amp;auto=webp&amp;s=3694d08c90b460571d9d562711bdb2f4ff1edb91
+
+My internet suddenly became super slow. Is it just me, or is anyone else facing the same issue in Colombo?",565aea0a30d0d1d6943bb0b30deafac0087dce00c03acfe5e45de8ab9147ff76,3,0,0,1,scrape_reddit
+1pdtboo,1764831290.0,reddit,competitor_mention,Dialog,ayame400,https://www.reddit.com/r/TruePokemon/comments/1pdtboo/legendza_feels_like_im_in_princess_tutu_world/,LegendZA feels like I’m in Princess Tutu world. Casual fan requesting if newer games are just like this or if there’s something to this,"I’m making my way through ZA and really taking notice how there’s a lot of moments where they set of false choices in the game with dialog options that don’t matter. The option to leave the city only for it to be a dream, and the Canari quiz I just finished where they insisted I compete in a question based tournament and wouldn’t tell me the answer so it seemed like I had to make choices but then they mechanically prevented me from choosing the wrong answers. I also know that your rival will sto",4f45057f7f135a1057cb0afa0e46445273cc579b9e8d4ce030158126c927b963,1,0,0,1,scrape_reddit
+1pdt6ss,1764830805.0,reddit,competitor_mention,Dialog,incorporo,https://www.reddit.com/r/Roumanie/comments/1pdt6ss/scrisoare_deschisa_catre_organizatiile_societatii/,Scrisoare deschisa catre organizatiile societatii civile implicate în dialogul privind reforma justitiei,"Ma gandesc foarte serios sa fac eu petitii catre instantele de judecata, pentru a obtine un raspuns real din partea judecatorilor cu privire la fenomenele din interiorul sistemului.",7b3afb7e9591a72db873962bae595269cf6e20123a44a027354066ba7e9e242f,1,0,0,0,scrape_reddit
+1pdt5ev,1764830666.0,reddit,competitor_mention,Dialog,LeftHandScroII,https://www.reddit.com/r/pathfinder_lfg/comments/1pdt5ev/in_hells_shadow_online18pf2e/,In Hell's Shadow [Online][+18][PF2E],"Shortish Adventure hoping to springboard into a longform campaign if things go well
+
+Setting: Golarion with some modifications ( Here is a list on changes I have made so far [https://docs.google.com/document/d/1BXFKD3250kjbHe-OpDhzsnZ8qwEw0N7k91-PRaMZ9cA/edit?usp=sharing](https://docs.google.com/document/d/1BXFKD3250kjbHe-OpDhzsnZ8qwEw0N7k91-PRaMZ9cA/edit?usp=sharing) )
+
+Slots: 2
+
+Requirements: A working microphone(Bonus points if you have a camera)
+
+Start: Early to Mid January  
+Time: 6pm pst o",8a612b30dda1d9e716b9a4b3f5279951dae468b138318e2e46605f81ca85e64a,1,0,0,0,scrape_reddit
+1pdt3gj,1764830472.0,reddit,competitor_mention,Dialog,One-Ice7086,https://www.reddit.com/r/artificial/comments/1pdt3gj/built_a_small_conversational_ai/,Built a small conversational AI experiment….unexpected user responses,"I made a simple conversational AI to test dialogue handling and shared it with a few people. What surprised me is how quickly they started having long, emotionally heavy conversations with it instead of just testing features.
+Is this kind of high-emotion engagement common with conversational agents?
+Curious if others building dialog systems have seen the same pattern.",e30825dcd0dfc8352086aad838854d0f1b7253138eaef6072cfea1d4f83f3ca6,0,0,0,0,scrape_reddit
+1pdtn4e,1764832442.0,reddit,competitor_mention,Dialog,Exiled1989,https://www.reddit.com/r/wow/comments/1pdtn4e/deck_dismay_bugged_with_1127/,Deck Dismay bugged with 11.2.7,"Hey guys,
+I waited weeks for A Birds Tail and The Show Must Go On anniversary quests to get fixed, only to not be able to complete the achievement because the Deck Dismay quests cannot be started.
+
+Lorenzo doesnt have the dialog necessary that gives the quest....",7c69255858cb6763fdd308999a0214aed44019f3923961f0f7a7f037e7f2a506,1,0,0,0,scrape_reddit
+1pdtj7u,1764832035.0,reddit,competitor_mention,Dialog,vrn123,https://www.reddit.com/r/srilanka/comments/1pdtj7u/is_it_just_me_dialog_super_slow_in_colombo/,Is it just me? Dialog super slow in Colombo.,"https://preview.redd.it/q7h66kxiz45g1.png?width=408&amp;format=png&amp;auto=webp&amp;s=3694d08c90b460571d9d562711bdb2f4ff1edb91
+
+My internet suddenly became super slow. Is it just me, or is anyone else facing the same issue in Colombo?",565aea0a30d0d1d6943bb0b30deafac0087dce00c03acfe5e45de8ab9147ff76,3,0,0,1,scrape_reddit
+1pdtboo,1764831290.0,reddit,competitor_mention,Dialog,ayame400,https://www.reddit.com/r/TruePokemon/comments/1pdtboo/legendza_feels_like_im_in_princess_tutu_world/,LegendZA feels like I’m in Princess Tutu world. Casual fan requesting if newer games are just like this or if there’s something to this,"I’m making my way through ZA and really taking notice how there’s a lot of moments where they set of false choices in the game with dialog options that don’t matter. The option to leave the city only for it to be a dream, and the Canari quiz I just finished where they insisted I compete in a question based tournament and wouldn’t tell me the answer so it seemed like I had to make choices but then they mechanically prevented me from choosing the wrong answers. I also know that your rival will sto",4f45057f7f135a1057cb0afa0e46445273cc579b9e8d4ce030158126c927b963,1,0,0,1,scrape_reddit
+1pdt6ss,1764830805.0,reddit,competitor_mention,Dialog,incorporo,https://www.reddit.com/r/Roumanie/comments/1pdt6ss/scrisoare_deschisa_catre_organizatiile_societatii/,Scrisoare deschisa catre organizatiile societatii civile implicate în dialogul privind reforma justitiei,"Ma gandesc foarte serios sa fac eu petitii catre instantele de judecata, pentru a obtine un raspuns real din partea judecatorilor cu privire la fenomenele din interiorul sistemului.",7b3afb7e9591a72db873962bae595269cf6e20123a44a027354066ba7e9e242f,1,0,0,0,scrape_reddit
+1pdt5ev,1764830666.0,reddit,competitor_mention,Dialog,LeftHandScroII,https://www.reddit.com/r/pathfinder_lfg/comments/1pdt5ev/in_hells_shadow_online18pf2e/,In Hell's Shadow [Online][+18][PF2E],"Shortish Adventure hoping to springboard into a longform campaign if things go well
+
+Setting: Golarion with some modifications ( Here is a list on changes I have made so far [https://docs.google.com/document/d/1BXFKD3250kjbHe-OpDhzsnZ8qwEw0N7k91-PRaMZ9cA/edit?usp=sharing](https://docs.google.com/document/d/1BXFKD3250kjbHe-OpDhzsnZ8qwEw0N7k91-PRaMZ9cA/edit?usp=sharing) )
+
+Slots: 2
+
+Requirements: A working microphone(Bonus points if you have a camera)
+
+Start: Early to Mid January  
+Time: 6pm pst o",8a612b30dda1d9e716b9a4b3f5279951dae468b138318e2e46605f81ca85e64a,1,0,0,0,scrape_reddit
+1pdt3gj,1764830472.0,reddit,competitor_mention,Dialog,One-Ice7086,https://www.reddit.com/r/artificial/comments/1pdt3gj/built_a_small_conversational_ai/,Built a small conversational AI experiment….unexpected user responses,"I made a simple conversational AI to test dialogue handling and shared it with a few people. What surprised me is how quickly they started having long, emotionally heavy conversations with it instead of just testing features.
+Is this kind of high-emotion engagement common with conversational agents?
+Curious if others building dialog systems have seen the same pattern.",e30825dcd0dfc8352086aad838854d0f1b7253138eaef6072cfea1d4f83f3ca6,0,0,0,0,scrape_reddit

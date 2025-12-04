@@ -445,7 +445,11 @@ Source: Multi-platform aggregation (DMC, MetDept, Twitter, Facebook, LinkedIn, I
         # Create integration output
         insight = {
             "source_event_id": str(uuid.uuid4()),
-            "structured_data": structured_feeds
+            "structured_data": structured_feeds,
+            "domain": "meteorological",
+            "summary": llm_summary[:500],
+            "severity": "medium",
+            "impact_type": "risk"
         }
         
         print("  ✓ Final Feed Formatted")

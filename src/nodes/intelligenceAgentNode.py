@@ -431,17 +431,22 @@ Source: Multi-platform competitive intelligence (Twitter, Facebook, LinkedIn, In
 """
         
         # Create integration output with structured data
+        # FIXED: Pass actual feed data, not just counts
         structured_feeds = {
-            "profiles": {p: len(items) for p, items in profile_feeds.items()},
-            "competitors": {c: len(items) for c, items in competitor_feeds.items()},
-            "products": {p: len(items) for p, items in product_feeds.items()},
-            "local_intel": len(local_intel),
-            "global_intel": len(global_intel)
+            "profiles": profile_feeds,  # Full profile data, not counts
+            "competitors": competitor_feeds,  # Full competitor data
+            "products": product_feeds,  # Full product review data
+            "local_intel": local_intel,
+            "global_intel": global_intel
         }
         
         insight = {
             "source_event_id": str(uuid.uuid4()),
-            "structured_data": structured_feeds
+            "structured_data": structured_feeds,
+            "domain": "intelligence",
+            "summary": llm_summary[:500],  # Include summary for FeedAggregator
+            "severity": "medium",
+            "impact_type": "risk"
         }
         
         print("  ✓ Final Feed Formatted")

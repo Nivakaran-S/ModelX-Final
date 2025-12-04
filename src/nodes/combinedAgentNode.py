@@ -226,7 +226,72 @@ class CombinedAgentNode:
         logger.info(f"[FeedAggregatorAgent] ===== PRODUCED {len(converted)} RANKED EVENTS =====") 
         logger.info(f"[FeedAggregatorAgent] ===== STORED IN ALL DATABASES (SQLite+ChromaDB+Neo4j) =====")
         
-        return {"final_ranked_feed": converted}
+        # NEW: Step 6 - Create categorized feeds for frontend display
+        categorized = {
+            "political": [],
+            "economical": [],
+            "social": [],
+            "meteorological": [],
+            "intelligence": []
+        }
+        
+        for ins in flattened:
+            domain = ins.get("domain", "unknown")
+            structured_data = ins.get("structured_data", {})
+            
+            # Skip if no structured data or unknown domain
+            if not structured_data or domain not in categorized:
+                continue
+            
+            # Extract and add feeds for this domain
+            domain_feeds = self._extract_feeds(structured_data, domain)
+            categorized[domain].extend(domain_feeds)
+        
+        # Log categorized counts
+        for domain, items in categorized.items():
+            logger.info(f"[FeedAggregatorAgent] {domain.title()}: {len(items)} categorized items")
+        
+        return {
+            "final_ranked_feed": converted,
+            "categorized_feeds": categorized
+        }
+    
+    def _extract_feeds(self, structured_data: Dict[str, Any], domain: str) -> List[Dict[str, Any]]:
+        """
+        Helper to extract and flatten feed items from structured_data.
+        Converts nested structured_data into a flat list of feed items.
+        """
+        extracted = []
+        
+        for category, items in structured_data.items():
+            # Handle list items (actual feed data)
+            if isinstance(items, list):
+                for item in items:
+                    if isinstance(item, dict):
+                        feed_item = {
+                            **item,
+                            "domain": domain,
+                            "category": category,
+                            "timestamp": item.get("timestamp", datetime.utcnow().isoformat())
+                        }
+                        extracted.append(feed_item)
+            
+            # Handle dictionary items (e.g., intelligence profiles/competitors)
+            elif isinstance(items, dict):
+                for key, value in items.items():
+                    if isinstance(value, list):
+                        for item in value:
+                            if isinstance(item, dict):
+                                feed_item = {
+                                    **item,
+                                    "domain": domain,
+                                    "category": category,
+                                    "subcategory": key,
+                                    "timestamp": item.get("timestamp", datetime.utcnow().isoformat())
+                                }
+                                extracted.append(feed_item)
+        
+        return extracted
     
     # =========================================================================
     # 3. DATA REFRESHER AGENT

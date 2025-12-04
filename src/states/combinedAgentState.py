@@ -65,6 +65,18 @@ class CombinedAgentState(BaseModel):
         description="Ranked and deduplicated feed for National Activity Feed"
     )
     
+    # NEW: Categorized feeds organized by domain for frontend sections
+    categorized_feeds: Dict[str, List[Dict[str, Any]]] = Field(
+        default_factory=lambda: {
+            "political": [],
+            "economical": [],
+            "social": [],
+            "meteorological": [],
+            "intelligence": []
+        },
+        description="Feeds organized by domain category for frontend display"
+    )
+    
     # Dashboard snapshot for Operational Risk Radar
     risk_dashboard_snapshot: Dict[str, Any] = Field(
         default_factory=lambda: {

@@ -1,10 +1,24 @@
 """
 src/states/socialAgentState.py
 Social Agent State - handles trending topics, events, people, social intelligence
+FIXED: Added custom reducer for domain_insights to prevent InvalidUpdateError
 """
 import operator 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from typing_extensions import TypedDict, Annotated
+
+
+# ============================================================================
+# CUSTOM REDUCER (Fixes InvalidUpdateError for parallel node updates)
+# ============================================================================
+def reduce_domain_insights(existing: List[Dict], new: Union[List[Dict], str]) -> List[Dict]:
+    """Custom reducer for domain_insights to handle concurrent updates"""
+    if isinstance(new, str) and new == "RESET":
+        return []
+    current = existing if isinstance(existing, list) else []
+    if isinstance(new, list):
+        return current + new
+    return current
 
 
 class SocialAgentState(TypedDict, total=False):
@@ -45,7 +59,7 @@ class SocialAgentState(TypedDict, total=False):
     feed_history: Annotated[List[str], operator.add]
     
     # ===== INTEGRATION WITH PARENT GRAPH =====
-    domain_insights: List[Dict[str, Any]]
+    domain_insights: Annotated[List[Dict[str, Any]], reduce_domain_insights]
     
     # ===== FEED AGGREGATOR =====
     aggregator_stats: Dict[str, Any]

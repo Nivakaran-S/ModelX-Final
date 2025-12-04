@@ -475,7 +475,11 @@ Source: Multi-platform aggregation (Twitter, Facebook, LinkedIn, Instagram, Redd
         # Create integration output
         insight = {
             "source_event_id": str(uuid.uuid4()),
-            "structured_data": structured_feeds
+            "structured_data": structured_feeds,
+            "domain": "social",
+            "summary": llm_summary[:500],
+            "severity": "medium",
+            "impact_type": "risk"
         }
         
         print("  ✓ Final Feed Formatted")
