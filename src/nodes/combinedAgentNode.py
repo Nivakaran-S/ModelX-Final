@@ -11,6 +11,9 @@ import time
 from datetime import datetime
 from typing import Dict, Any, List
 
+# Import storage manager for production-grade persistence
+from src.storage.storage_manager import StorageManager
+
 logger = logging.getLogger("combined_node")
 logger.setLevel(logging.INFO)
 if not logger.handlers:
@@ -220,7 +223,8 @@ class CombinedAgentNode:
                 timestamp=timestamp
             )
         
-        logger.info(f"[FeedAggregatorAgent] ===== PRODUCED {len(converted)} RANKED EVENTS =====") logger.info(f"[FeedAggregatorAgent] ===== STORED IN ALL DATABASES (SQLite+ChromaDB+Neo4j) =====")
+        logger.info(f"[FeedAggregatorAgent] ===== PRODUCED {len(converted)} RANKED EVENTS =====") 
+        logger.info(f"[FeedAggregatorAgent] ===== STORED IN ALL DATABASES (SQLite+ChromaDB+Neo4j) =====")
         
         return {"final_ranked_feed": converted}
     

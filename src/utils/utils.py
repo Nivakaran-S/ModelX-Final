@@ -848,7 +848,7 @@ def scrape_train_schedule_impl(
 # TWITTER TRENDING
 # ============================================
 
-def _scrape_twitter_trending_with_playwright(storage_state_path: Optional[str] = None, headless: bool = False) -> List[Dict[str, Any]]:
+def _scrape_twitter_trending_with_playwright(storage_state_path: Optional[str] = None, headless: bool = True) -> List[Dict[str, Any]]:
     ensure_playwright()
     trending = []
     with sync_playwright() as p:
@@ -1042,7 +1042,7 @@ def scrape_linkedin(keywords: Optional[List[str]] = None, max_items: int = 10):
             ]
         }
         try:
-            session_path = create_or_restore_playwright_session(site, login_flow=login_flow, headless=False)
+            session_path = create_or_restore_playwright_session(site, login_flow=login_flow, headless=True)
         except Exception as e:
             return json.dumps({"error": f"No session found and failed to create one: {e}"})
 
@@ -1058,7 +1058,7 @@ def scrape_linkedin(keywords: Optional[List[str]] = None, max_items: int = 10):
             )
 
             browser = p.chromium.launch(
-                headless=False,
+                headless=True,
                 args=[
                     "--disable-blink-features=AutomationControlled",
                     "--start-maximized" 
@@ -1245,7 +1245,7 @@ def scrape_twitter(query: str = "Sri Lanka", max_items: int = 20):
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(
-                headless=False,
+                headless=True,
                 args=[
                     "--disable-blink-features=AutomationControlled",
                     "--no-sandbox",
@@ -1579,7 +1579,7 @@ def scrape_instagram(keywords: Optional[List[str]] = None, max_items: int = 15):
                 "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
             )
             
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             
             context = browser.new_context(
                 storage_state=session_path,
@@ -1694,7 +1694,7 @@ def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
                 "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
             
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             
             context = browser.new_context(
                 storage_state=session_path,
@@ -2080,7 +2080,7 @@ def scrape_instagram(keywords: Optional[List[str]] = None, max_items: int = 15):
                 "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
             )
             
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             
             context = browser.new_context(
                 storage_state=session_path,
@@ -2195,7 +2195,7 @@ def scrape_facebook(keywords: Optional[List[str]] = None, max_items: int = 10):
                 "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
             
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             
             context = browser.new_context(
                 storage_state=session_path,

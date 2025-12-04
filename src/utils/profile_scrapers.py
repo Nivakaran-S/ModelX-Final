@@ -85,7 +85,7 @@ def scrape_twitter_profile(username: str, max_items: int = 20):
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(
-                headless=False,
+                headless=True,
                 args=[
                     "--disable-blink-features=AutomationControlled",
                     "--no-sandbox",
@@ -339,7 +339,7 @@ def scrape_facebook_profile(profile_url: str, max_items: int = 10):
                 "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
             
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             
             context = browser.new_context(
                 storage_state=session_path,
@@ -523,7 +523,7 @@ def scrape_instagram_profile(username: str, max_items: int = 15):
                 "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
             )
             
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             
             context = browser.new_context(
                 storage_state=session_path,
@@ -649,7 +649,7 @@ def scrape_linkedin_profile(company_or_username: str, max_items: int = 10):
     
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             context = browser.new_context(
                 storage_state=session_path,
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
