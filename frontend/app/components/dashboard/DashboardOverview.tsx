@@ -7,44 +7,47 @@ import { motion } from "framer-motion";
 const DashboardOverview = () => {
   const { dashboard, events, isConnected, status } = useModelXData();
 
+  // Safety check: ensure events is always an array
+  const safeEvents = events || [];
+
   // Calculate domain-specific metrics from events
-  const domainCounts = events.reduce((acc, event) => {
+  const domainCounts = safeEvents.reduce((acc, event) => {
     acc[event.domain] = (acc[event.domain] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const riskEvents = events.filter(e => e.impact_type === 'risk');
-  const opportunityEvents = events.filter(e => e.impact_type === 'opportunity');
-  const criticalEvents = events.filter(e => e.severity === 'critical' || e.severity === 'high');
+  const riskEvents = safeEvents.filter(e => e.impact_type === 'risk');
+  const opportunityEvents = safeEvents.filter(e => e.impact_type === 'opportunity');
+  const criticalEvents = safeEvents.filter(e => e.severity === 'critical' || e.severity === 'high');
 
   const metrics = [
-    { 
-      label: "Risk Events", 
-      value: riskEvents.length.toString(), 
+    {
+      label: "Risk Events",
+      value: riskEvents.length.toString(),
       change: criticalEvents.length > 0 ? `${criticalEvents.length} critical` : "—",
-      icon: AlertTriangle, 
-      status: criticalEvents.length > 3 ? "warning" : "success" 
+      icon: AlertTriangle,
+      status: criticalEvents.length > 3 ? "warning" : "success"
     },
-    { 
-      label: "Opportunities", 
-      value: opportunityEvents.length.toString(), 
+    {
+      label: "Opportunities",
+      value: opportunityEvents.length.toString(),
       change: "+Growth",
-      icon: TrendingUp, 
-      status: "success" 
+      icon: TrendingUp,
+      status: "success"
     },
-    { 
-      label: "Data Sources", 
-      value: Object.keys(domainCounts).length.toString(), 
+    {
+      label: "Data Sources",
+      value: Object.keys(domainCounts).length.toString(),
       change: "Active",
-      icon: Zap, 
-      status: "info" 
+      icon: Zap,
+      status: "info"
     },
-    { 
-      label: "Confidence", 
-      value: `${Math.round(dashboard.avg_confidence * 100)}%`, 
+    {
+      label: "Confidence",
+      value: `${Math.round(dashboard.avg_confidence * 100)}%`,
       change: "Avg Score",
-      icon: Users, 
-      status: "success" 
+      icon: Users,
+      status: "success"
     },
   ];
 
@@ -109,10 +112,10 @@ const DashboardOverview = () => {
         <h3 className="font-bold mb-4 flex items-center gap-2">
           <Zap className="w-5 h-5 text-primary" />
           LIVE INTELLIGENCE FEED
-          <Badge className="ml-auto">{events.length} Events</Badge>
+          <Badge className="ml-auto">{safeEvents.length} Events</Badge>
         </h3>
         <div className="space-y-3 max-h-[500px] overflow-y-auto">
-          {events.slice(0, 10).map((event, idx) => {
+          {safeEvents.slice(0, 10).map((event, idx) => {
             const isRisk = event.impact_type === 'risk';
             const severityColor = {
               critical: 'destructive',
@@ -152,7 +155,7 @@ const DashboardOverview = () => {
               </motion.div>
             );
           })}
-          {events.length === 0 && (
+          {safeEvents.length === 0 && (
             <div className="text-center text-muted-foreground py-8">
               <AlertTriangle className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-sm font-mono">Initializing intelligence gathering...</p>

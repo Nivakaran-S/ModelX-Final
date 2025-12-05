@@ -5,12 +5,18 @@ import DashboardOverview from "../components/dashboard/DashboardOverview";
 import MapView from "../components/map/MapView";
 import IntelligenceFeed from "../components/intelligence/IntelligenceFeed";
 import StockPredictions from "../components/dashboard/StockPredictions";
+import LoadingScreen from "../components/LoadingScreen";
 import { Activity, Map, Radio, BarChart3, Zap } from "lucide-react";
 import { useModelXData } from "../hooks/use-modelx-data";
 import { Badge } from "../components/ui/badge";
 
 const Index = () => {
-  const { status, run_count, isConnected } = useModelXData();
+  const { status, run_count, isConnected, first_run_complete } = useModelXData();
+
+  // Show loading screen until first graph run completes
+  if (status === 'initializing' || !first_run_complete) {
+    return <LoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,19 +50,19 @@ const Index = () => {
                   RECONNECTING
                 </Badge>
               )}
-              
+
               {/* System Status */}
               <Badge className="border border-border flex items-center gap-2">
                 <Zap className="w-3 h-3" />
                 Run #{run_count}
               </Badge>
-              
+
               {/* Time */}
               <div className="text-xs font-mono text-muted-foreground">
-                {new Date().toLocaleString('en-US', { 
-                  hour: '2-digit', 
+                {new Date().toLocaleString('en-US', {
+                  hour: '2-digit',
                   minute: '2-digit',
-                  hour12: false 
+                  hour12: false
                 })} HRS
               </div>
             </div>

@@ -33,6 +33,7 @@ export interface ModelXState {
   risk_dashboard_snapshot: RiskDashboard;
   run_count: number;
   status: 'initializing' | 'operational' | 'error';
+  first_run_complete?: boolean;
   last_update?: string;
 }
 
@@ -50,7 +51,8 @@ export function useModelXData() {
       last_updated: new Date().toISOString()
     },
     run_count: 0,
-    status: 'initializing'
+    status: 'initializing',
+    first_run_complete: false
   });
 
   const [isConnected, setIsConnected] = useState(false);
