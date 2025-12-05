@@ -2,13 +2,16 @@
 src/nodes/socialAgentNode.py
 MODULAR - Social Agent Node with Subgraph Architecture
 Monitors trending topics, events, people, social intelligence across geographic scopes
+
+Updated: Uses Tool Factory pattern for parallel execution safety.
+Each agent instance gets its own private set of tools.
 """
 import json
 import uuid
 from typing import List, Dict, Any
 from datetime import datetime
 from src.states.socialAgentState import SocialAgentState
-from src.utils.utils import TOOL_MAPPING
+from src.utils.tool_factory import create_tool_set
 from src.llms.groqllm import GroqLLM
 
 
@@ -18,10 +21,18 @@ class SocialAgentNode:
     Module 1: Trending Topics (Sri Lanka specific trends)
     Module 2: Social Media (Sri Lanka, Asia, World scopes)
     Module 3: Feed Generation (Categorize, Summarize, Format)
+    
+    Thread Safety:
+        Each SocialAgentNode instance creates its own private ToolSet,
+        enabling safe parallel execution with other agents.
     """
     
     def __init__(self, llm=None):
-        """Initialize with Groq LLM"""
+        """Initialize with Groq LLM and private tool set"""
+        # Create PRIVATE tool instances for this agent
+        # This enables parallel execution without shared state conflicts
+        self.tools = create_tool_set()
+        
         if llm is None:
             groq = GroqLLM()
             self.llm = groq.get_llm()
@@ -52,7 +63,7 @@ class SocialAgentNode:
         
         # Twitter - Sri Lanka Trends
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "sri lanka trending viral",
@@ -72,7 +83,7 @@ class SocialAgentNode:
         
         # Reddit - Sri Lanka
         try:
-            reddit_tool = TOOL_MAPPING.get("scrape_reddit")
+            reddit_tool = self.tools.get("scrape_reddit")
             if reddit_tool:
                 reddit_data = reddit_tool.invoke({
                     "keywords": ["sri lanka trending", "sri lanka viral", "sri lanka news"],
@@ -110,7 +121,7 @@ class SocialAgentNode:
         
         # Twitter - Sri Lanka Events & People
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "sri lanka events people celebrities",
@@ -130,7 +141,7 @@ class SocialAgentNode:
         
         # Facebook - Sri Lanka
         try:
-            facebook_tool = TOOL_MAPPING.get("scrape_facebook")
+            facebook_tool = self.tools.get("scrape_facebook")
             if facebook_tool:
                 facebook_data = facebook_tool.invoke({
                     "keywords": ["sri lanka events", "sri lanka trending"],
@@ -150,7 +161,7 @@ class SocialAgentNode:
         
         # LinkedIn - Sri Lanka Professional
         try:
-            linkedin_tool = TOOL_MAPPING.get("scrape_linkedin")
+            linkedin_tool = self.tools.get("scrape_linkedin")
             if linkedin_tool:
                 linkedin_data = linkedin_tool.invoke({
                     "keywords": ["sri lanka events", "sri lanka people"],
@@ -170,7 +181,7 @@ class SocialAgentNode:
         
         # Instagram - Sri Lanka
         try:
-            instagram_tool = TOOL_MAPPING.get("scrape_instagram")
+            instagram_tool = self.tools.get("scrape_instagram")
             if instagram_tool:
                 instagram_data = instagram_tool.invoke({
                     "keywords": ["srilankaevents", "srilankatrending"],
@@ -203,7 +214,7 @@ class SocialAgentNode:
         
         # Twitter - Asian Events
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "asia trending india pakistan bangladesh",
@@ -223,7 +234,7 @@ class SocialAgentNode:
         
         # Facebook - Asia
         try:
-            facebook_tool = TOOL_MAPPING.get("scrape_facebook")
+            facebook_tool = self.tools.get("scrape_facebook")
             if facebook_tool:
                 facebook_data = facebook_tool.invoke({
                     "keywords": ["asia trending", "india events"],
@@ -243,7 +254,7 @@ class SocialAgentNode:
         
         # Reddit - Asian subreddits
         try:
-            reddit_tool = TOOL_MAPPING.get("scrape_reddit")
+            reddit_tool = self.tools.get("scrape_reddit")
             if reddit_tool:
                 reddit_data = reddit_tool.invoke({
                     "keywords": ["asia trending", "india", "pakistan"],
@@ -277,7 +288,7 @@ class SocialAgentNode:
         
         # Twitter - World Trends
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "world trending global breaking news",
@@ -297,7 +308,7 @@ class SocialAgentNode:
         
         # Reddit - World News
         try:
-            reddit_tool = TOOL_MAPPING.get("scrape_reddit")
+            reddit_tool = self.tools.get("scrape_reddit")
             if reddit_tool:
                 reddit_data = reddit_tool.invoke({
                     "keywords": ["breaking", "trending", "viral"],
@@ -472,22 +483,96 @@ Monitoring social sentiment, trending topics, events, and people across:
 Source: Multi-platform aggregation (Twitter, Facebook, LinkedIn, Instagram, Reddit)
 """
         
-        # Create integration output
-        insight = {
+        # Create list for per-region/topic domain_insights (FRONTEND COMPATIBLE)
+        domain_insights = []
+        timestamp = datetime.utcnow().isoformat()
+        
+        # Sri Lankan districts for geographic tagging
+        districts = [
+            "colombo", "gampaha", "kalutara", "kandy", "matale", 
+            "nuwara eliya", "galle", "matara", "hambantota", 
+            "jaffna", "kilinochchi", "mannar", "mullaitivu", "vavuniya",
+            "puttalam", "kurunegala", "anuradhapura", "polonnaruwa",
+            "badulla", "monaragala", "ratnapura", "kegalle",
+            "ampara", "batticaloa", "trincomalee"
+        ]
+        
+        # 1. Create per-item Sri Lanka social insights
+        sri_lanka_data = structured_feeds.get("sri lanka", [])
+        for post in sri_lanka_data[:15]:
+            post_text = post.get("text", "") or post.get("title", "")
+            if not post_text or len(post_text) < 10:
+                continue
+            
+            # Try to detect district from post text
+            detected_district = "Sri Lanka"
+            for district in districts:
+                if district.lower() in post_text.lower():
+                    detected_district = district.title()
+                    break
+            
+            # Determine severity based on keywords
+            severity = "low"
+            if any(kw in post_text.lower() for kw in ["protest", "riot", "emergency", "violence", "crisis"]):
+                severity = "high"
+            elif any(kw in post_text.lower() for kw in ["trending", "viral", "breaking", "update"]):
+                severity = "medium"
+            
+            domain_insights.append({
+                "source_event_id": str(uuid.uuid4()),
+                "domain": "social",
+                "summary": f"{detected_district}: {post_text[:200]}",
+                "severity": severity,
+                "impact_type": "risk" if severity in ["high", "medium"] else "opportunity",
+                "timestamp": timestamp
+            })
+        
+        # 2. Create Asia regional insights
+        asia_data = structured_feeds.get("asia", [])
+        for post in asia_data[:5]:
+            post_text = post.get("text", "") or post.get("title", "")
+            if not post_text or len(post_text) < 10:
+                continue
+            domain_insights.append({
+                "source_event_id": str(uuid.uuid4()),
+                "domain": "social",
+                "summary": f"Asia Regional: {post_text[:200]}",
+                "severity": "medium",
+                "impact_type": "risk",
+                "timestamp": timestamp
+            })
+        
+        # 3. Create World insights
+        world_data = structured_feeds.get("world", [])
+        for post in world_data[:5]:
+            post_text = post.get("text", "") or post.get("title", "")
+            if not post_text or len(post_text) < 10:
+                continue
+            domain_insights.append({
+                "source_event_id": str(uuid.uuid4()),
+                "domain": "social",
+                "summary": f"Global: {post_text[:200]}",
+                "severity": "low",
+                "impact_type": "opportunity",
+                "timestamp": timestamp
+            })
+        
+        # 4. Add executive summary insight
+        domain_insights.append({
             "source_event_id": str(uuid.uuid4()),
             "structured_data": structured_feeds,
             "domain": "social",
-            "summary": llm_summary[:500],
+            "summary": f"Sri Lanka Social Intelligence Summary: {llm_summary[:300]}",
             "severity": "medium",
             "impact_type": "risk"
-        }
+        })
         
-        print("  ✓ Final Feed Formatted")
+        print(f"  ✓ Created {len(domain_insights)} social intelligence insights")
         
         return {
             "final_feed": bulletin,
             "feed_history": [bulletin],
-            "domain_insights": [insight]
+            "domain_insights": domain_insights
         }
     
     # ============================================

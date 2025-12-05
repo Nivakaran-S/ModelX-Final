@@ -4,6 +4,7 @@ Main entry point for the Combined Agent System.
 FIXED: Removed sub-graph wrappers that were causing CancelledError
 """
 from __future__ import annotations
+from typing import Dict, Any
 import logging
 from datetime import datetime
 

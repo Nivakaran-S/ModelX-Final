@@ -1,0 +1,115 @@
+event_id,timestamp,domain,severity,impact_type,confidence_score,summary
+789c2072-68e7-4585-8291-b6926275f884,2025-12-05T02:01:07.365866,meteorological,low,opportunity,0.2,Jaffna: Live @25 Extreme Weather - 02.12.2025
+3b2305d2-0ca5-4b66-8070-957b9be054a6,2025-12-05T02:01:08.101257,meteorological,low,opportunity,0.2,Jaffna: Live @25 Extreme Weather - 03.12.2025
+63c6d931-f8e6-4a77-aa8c-5316fa8326fe,2025-12-05T02:01:08.817375,meteorological,high,risk,0.15,Trincomalee: NEW WEATHER WARNING – HEAVY RAIN & STRONG WINDS… See more
+6612a1be-4cdb-4ca7-9c65-c6df84bf339f,2025-12-05T02:01:09.484462,political,high,risk,0.15,"Sri Lanka Political: While the Wickremesinghe government won plaudits abroad for its handling of the economic crisis, at home the language of the National People’s Power resonated with a population increasingly disgruntle"
+864af59d-0143-42bb-a954-616f2fdd4b36,2025-12-05T02:01:10.182662,political,high,risk,0.15,"Sri Lanka Political: Wickremesinghe was brought before a commission in the late 1990s over the torture camp allegations, but nothing came out of it. The National People’s Power made several insinuations about the Rajapaks"
+d208856e-37ac-4157-8efb-9c662dbd18d5,2025-12-05T02:01:10.855107,political,high,risk,0.15,"Sri Lanka Political: It is not quite a miracle. But it is certainly a very impressive turnaround. From around 1970 until 2021, Sri Lanka seemed to be on an irreversible track toward steadily worsening governance: grand co"
+d8e11c1f-e199-470b-a09f-d91fbf769bbe,2025-12-05T02:01:11.526811,economical,medium,risk,0.05,"Sri Lanka Economy (Technology): Qualcomm acquires Arduino, launches the new Arduino UNO Q single-board computer"
+d9aef161-42a3-4078-a95e-573c7fa7ed12,2025-12-05T02:01:12.222806,economical,medium,risk,0.05,"Sri Lanka Economy (Technology): BREAKING NEWS! Qualcomm acquires Arduino, launches the new Arduino UNO Q single-board computer. … See more"
+e2e9eaa2-8a76-40f4-ad90-2f7419501180,2025-12-05T02:01:12.909677,economical,medium,risk,0.05,Sri Lanka Economy (Technology): Highlights from #NITC2025 – Sri Lanka’s Premier Tech Conference!… See more
+93fbcd04-515e-4756-a34e-282e9c9491c8,2025-12-05T02:01:13.530930,economical,medium,risk,0.05,"Sri Lanka Economy (Technology): Discover exciting destinations around the world with Minor Hotels, from island retreats to urban escapes and beyond."
+0a5e85c7-cc79-4608-95a8-524d7808abb4,2025-12-05T02:01:14.134103,economical,medium,risk,0.05,"Sri Lanka Economy (Technology): In a landmark move for Sri Lanka’s renewable energy sector, Macksons Solar, in collaboration with Macktiles, unveiled the country’s largest rooftop solar project at the… See more"
+6e2642e1-83dd-443e-8f03-bc68361b8d2a,2025-12-05T02:01:14.827471,economical,medium,risk,0.05,"Sri Lanka Economic Summary: **Executive Summary**
+
+Sri Lanka’s All‑Share Price Index (ASPI) is trading near 6.67, a modest rise from the 6.66 opening, and has posted a recent intraday high of 6.81. Trading volume remains robust, with 3.2 million shares exchanged on the latest session, indicating healthy liquidity. Despite the "
+b7407517-d4a9-4cdd-a718-b623696fc769,2025-12-05T02:01:15.492877,intelligence,medium,risk,0.05,"Business Intelligence Summary: **Strategic Summary – Sri Lanka Telecom Landscape**
+
+| Category | Highlights |
+|----------|------------|
+| **Intelligence Scope** | 18 items collected; 5 local intel pieces; no global intel. |
+| **Competitors Covered** | DialogLK, SLTMobitel, HutchSriLanka, DialogAxiata, dialog‑axiata, slt‑mobitel. "
+9e8a60ac-cf60-4dc5-8ee0-7cebeda80094,2025-12-05T02:01:16.118187,meteorological,medium,risk,0.05,"Sri Lanka Meteorological Summary: **Executive Summary – Sri Lanka Weather (05 Dec 2025)**  
+The national forecast indicates the gradual onset of the Northeast monsoon, with widespread showers and occasional thundershowers across the island. Heavy rainfall (exceeding 75 mm) is expected in the Western and Sabaragamuwa provinces, parti"
+49bf8f98-e0cb-43b2-896b-427e3f40f176,2025-12-05T02:01:16.777890,political,medium,risk,0.05,"Sri Lanka Political: 1,289 வீடுகள் முற்றிலுமாக அழிக்கப்பட்டுள்ளது -  வீடமைப்பு அபிவிருத்தி அதிகார சபை ஜனாதிபதியிடம் தெரிவிப்பு
+#VoiceTube #voicetubetamil #voicetubetamilsrilanka #SriLankaPolitics #TamilNews"
+23290f3b-2757-4203-8c1c-73469b6138ab,2025-12-05T02:01:17.421135,political,medium,risk,0.05,"Sri Lanka Political: Politics and Lankan Dads? It's the perfect mix!🫱🏼‍🫲🏽
+
+Here's a rundown of the Types of Dads and their Politics😎 Have we captured them all? Let us know in the comments!
+
+#Politicslk #typesofdads #Srila"
+37c930ec-a479-429d-9958-2d5a8c6065fd,2025-12-05T02:01:18.062401,political,medium,risk,0.05,Sri Lanka Political: Sri Lanka Travel Update – Important Information for Visitors (December 2025)… See more
+67ae0cab-cabb-4a44-b7b2-428e53213a7a,2025-12-05T02:01:18.722304,political,medium,risk,0.05,"Galle Political: INFINITY Nature Villa - Galle Twon
+Make yourself at Home.....… See more"
+7997c80c-3d37-4142-b8c8-d1b7de2fd58f,2025-12-05T02:01:19.421517,political,medium,risk,0.05,Kurunegala Political: The #Coco_Forest_Camping project - Kurunegala we are  launching in soon... This is the presenting of new idea for the newly developing Tourism Industry in the Kurunegala district of the North Western 
+4266b2be-16cb-489b-813c-46d3dc9bce6a,2025-12-05T02:01:20.103781,political,medium,risk,0.05,"Sri Lanka Political: Our Sweet Guests from ....
+Netherlands
+Relax S… See more"
+96d7144e-58a2-46f0-a3fa-6abe77d39d63,2025-12-05T02:01:20.874179,political,medium,risk,0.05,"Kurunegala Political: WE ARE HIRING – COMMUNITY MOBILISER
+Sri Lanka Red Cross Society – Kurunegala Branch… See more"
+2610e00b-877b-4188-a7c9-ef00bae025f8,2025-12-05T02:01:21.642508,political,medium,risk,0.05,"Sri Lanka Political Summary: **Executive Summary**
+
+1. Former Prime Minister Ranil Wickremesinghe’s arrest has sparked a surge of domestic discontent, amplifying the National People’s Power’s narrative of elite corruption.  
+2. Despite international praise for his crisis management, the opposition’s sweeping victories in all bu"
+911ce6d1-d8a6-4e3e-8829-d86ea1114e1e,2025-12-05T02:01:22.861626,social,medium,risk,0.05,Asia Regional: Proud to Belong to a Region That Never Let Us Fall
+1681b9bc-b0df-44f1-8fec-6a1af1a1f306,2025-12-05T02:01:23.599598,social,medium,risk,0.05,Asia Regional: Hitchhiking from Goa to Japan
+e06c1bd5-4618-42bd-88a3-d9545b52192d,2025-12-05T02:01:24.225421,social,medium,risk,0.05,"Asia Regional: Traveling to Asia, rainy season?"
+52b67f3c-ec53-45be-9a18-ad0677968464,2025-12-05T02:01:24.883749,social,medium,risk,0.05,Asia Regional: Fire-Walking Rituals: When Devotion Walks Barefoot Across Flame
+11865e0b-63bf-45c5-905f-4c4c6f17ec37,2025-12-05T02:01:25.707516,social,medium,risk,0.05,"Sri Lanka Social Intelligence Summary: **Executive Summary**
+
+Across the globe, the most prominent trend is a surge in regional solidarity following a devastating cyclone that struck Sri Lanka. The Maldives launched a record‑breaking media campaign, raising one million dollars in a single day, while India and Pakistan dispatched aircraft"
+055a4628-70a1-454a-a667-be7ca5b11dc1,2025-12-05T02:23:54.309638,economical,medium,risk,0.05,"Sri Lanka Economic Summary: **Executive Summary – Sri Lanka Economy (as of 2025‑12‑04)**  
+
+1. **Data Availability** – Official macro‑economic indicators are not present in the current feed; only two items are listed, one of which is a placeholder note about missing Reddit posts.  
+2. **Stock‑Market Snapshot** – The only actio"
+369d8026-e107-4c5f-9d8e-e57b527713d4,2025-12-05T02:23:54.857114,social,medium,risk,0.05,"Sri Lanka Social Intelligence Summary: **Executive Summary**
+
+Global chatter is dominated by high‑profile social unrest and privacy concerns. In Ukraine, a fake viral email about COVID‑19 sparked riots as evacuees rushed to the border, while in Istanbul police dispersed a protest where women sang a viral anti‑rape anthem. A separate stor"
+ba0b042f-933d-45ba-9d5b-61d8897605cd,2025-12-05T02:41:41.533695,meteorological,low,opportunity,0.2,"Galle: 𝗪𝗲𝗮𝘁𝗵𝗲𝗿 𝗨𝗽𝗱𝗮𝘁𝗲 – 𝗦𝗿𝗶 𝗟𝗮𝗻𝗸𝗮
+Sri Lanka is current… See more"
+53390e3f-b2f8-450b-8186-d37e41a73466,2025-12-05T02:41:41.964454,economical,medium,risk,0.05,"Sri Lanka Economy (Tourism): Up close with the gentle giants of Sri Lanka
+Where every safari tells a story, and every moment feels magical.
+J… See more"
+83c5eca4-4e20-4b2f-a9b5-6dd05ff5de99,2025-12-05T02:41:42.451885,economical,medium,risk,0.05,"Sri Lanka Economy (Tourism): ""Status of Tourism Attractions 10:00 hrs – 03 Dec 2025 From Wilpattu to Yala & Kalpitiya to Mirissa, Sri Lanka is ready! … See more"
+43c5bc04-ab76-4104-b2fc-c3ccda79ef74,2025-12-05T02:41:42.973038,economical,medium,risk,0.05,"Sri Lanka Economy (Tourism): Status of Tourism Attractions
+10:00 hrs – 03 Dec 2025… See more"
+8c587d18-a562-41e8-944a-033e000943e7,2025-12-05T02:41:43.482800,economical,medium,risk,0.05,"Sri Lanka Economy (Technology): COLOMBO (News 1st); President Anura Kumara Dissanayake announced his government’s commitment to transforming Sri Lanka’s armed forces into a modern, technologically adv… See more"
+fb43bbb9-f6e0-48ff-a20f-f22c8c613df3,2025-12-05T02:41:44.076131,meteorological,medium,risk,0.05,"Sri Lanka Weather: මේ වෙලාවේ හැමෝටම මතක් වෙන මනුස්සයා පාලිත තෙවරප්පෙරුම ❤️
+#PrayForSriLanka #SriLanka #FloodRelief #StaySafeSL #SriLankaWeather DisasterRelief WeAreWithYou"
+991aa435-98e1-4944-bc74-efb298843c53,2025-12-05T02:41:44.613248,meteorological,medium,risk,0.05,"Sri Lanka Weather: Flood update from Welikanda
+Streets and paddy fields are submerged after heavy rains. Farmers and communities are affected.
+Stay safe and look out for one another. 
+
+Thank you Sharala for the update f"
+cee62ee0-f532-49d8-b047-a15fbbe7a68a,2025-12-05T02:41:45.086193,meteorological,medium,risk,0.05,"Sri Lanka Weather: The Embassy of Qatar in Sri Lanka urges all Qatari citizens and visitors to remain extremely cautious amid ongoing severe weather. Heavy rainfall, flooding, and landslides continue to affect several r"
+7a71ae34-d481-47ef-b01a-8299579d88f3,2025-12-05T02:41:45.562231,meteorological,medium,risk,0.05,"Sri Lanka Weather: ♥️ Update from Sri Lanka for our travellers:
+All AVG Travels’ groups currently in Sri Lanka are safe and continuing their itineraries as normal. The weather is good, and our on-ground team is monitori"
+da9d96cd-9ab0-446c-96c2-40dde38ce507,2025-12-05T02:41:46.095438,meteorological,medium,risk,0.05,"Sri Lanka Meteorological Summary: **Executive Summary**
+
+Sri Lanka is experiencing a severe weather event marked by heavy rainfall, widespread flooding, and landslides across at least three districts. Official weather bulletins confirm persistent downpours, while field reports from Welikanda detail submerged streets and paddy fields"
+79135ccf-47c3-4473-8682-c9b90468a6f3,2025-12-05T02:41:46.626345,political,medium,risk,0.05,"Jaffna Political: Brahminy Kite - Jaffna, Sri Lanka- 2025"
+5acc6d40-883a-4e33-a5b8-36b6e396b0ba,2025-12-05T02:41:47.172100,political,medium,risk,0.05,"Jaffna Political: Keerimalai Naguleswaram Temple – Jaffna, Sri Lanka
+L… See more"
+6d831d9a-ba4c-4f6b-b1f7-16468e3a4b19,2025-12-05T03:00:59.800650,political,high,risk,0.15,"Gampaha Political: Opposition Leader Sajith Premadasa's visit to India marks a turning point in Sri Lanka’s political and economic diplomacy. 🇮🇳🇱🇰
+
+Meeting with India’s External Affairs Minister Dr. S. Jaishankar, Finan"
+20ffe44a-db03-42a2-ab43-2a4132492dc4,2025-12-05T03:01:00.377754,political,high,risk,0.15,Sri Lanka Political: Sri Lanka’s political landscape is witnessing fresh turmoil as former President Ranil Wickremesinghe has been arrested and denied bail in a high-profile case involving alleged misuse of state funds du
+01d100c6-b907-4159-97cb-7a1e40c0c578,2025-12-05T03:01:01.012546,political,high,risk,0.15,"Sri Lanka Political: Former President Ranil Wickremesinghe has been arrested by the Criminal Investigation Department (CID) over allegations of misusing state funds during his presidency from 2022 to 2024.
+
+The charges st"
+cb82b2a8-79fa-412e-904a-8421244cf685,2025-12-05T03:01:01.629139,meteorological,medium,risk,0.05,"Sri Lanka Weather: 🌴✨ Wondering when to visit Sri Lanka? Here the best guide for the best time to visit Sri Lanka.
+.
+.
+.
+.
+To Book Sri Lanka Tour Packages, contact -9667064818
+.
+.
+.
+.
+Sri Lanka Travel guide, best time t"
+d8677216-0f0a-410e-bf50-bbfa13df1283,2025-12-05T03:01:02.346939,meteorological,medium,risk,0.05,"Sri Lanka Weather: 𝐒𝐫𝐢 𝐋𝐚𝐧𝐤𝐚 𝐂𝐫𝐢𝐜𝐤𝐞𝐭 𝐃𝐨𝐧𝐚𝐭𝐞𝐬 𝐑𝐬. 𝟑𝟎𝟎 𝐌𝐢𝐥𝐥𝐢𝐨𝐧 𝐭𝐨 𝐭𝐡𝐞 ‘𝐑𝐞𝐛𝐮𝐢𝐥𝐝𝐢𝐧𝐠 𝐒𝐫𝐢 𝐋𝐚𝐧𝐤𝐚’ 𝐅𝐮𝐧𝐝
+Sri Lanka Cricket (SLC), under the direction of President Mr. Shammi Silva and the Executive Committee, have decided to don"
+e635b4f7-f30e-4dc9-82c4-36617d4a51da,2025-12-05T03:01:02.955286,political,medium,risk,0.05,Jaffna Political: Now it's time to explore Jaffna #VisitJaffna #visitsrilanka
+bb5c6f30-d012-4b66-8573-bde832c102e7,2025-12-05T03:01:03.589663,political,medium,risk,0.05,"Jaffna Political: Swami's Birthday Celebrations 40 Years ago at Nallur Sai Illam (Jaffna, Sri Lanka)!… See more"
+9c9026ec-b1ee-4c78-89d5-d6f071fdf461,2025-12-05T03:01:04.264103,political,medium,risk,0.05,Jaffna Political: Now it's time to explore Jaffna #VisitJaffna #visitsrilanka
+d848fd20-bcf3-4669-9d53-5be86ec7abf3,2025-12-05T03:01:04.924828,political,medium,risk,0.05,"Puttalam Political: Evacuation operations are underway in Mahawa, Kurunegala, and Eluwankulam, Puttalam after severe flooding affected several communities this morning. The Sri Lanka Navy has deployed multiple relief tea"
+494f9f08-20da-47c7-96e1-a7b03c132358,2025-12-05T03:01:05.536181,political,medium,risk,0.05,"Puttalam Political: Evacuations underway amidst Mahawa and Eluwankulam floods The Sri Lanka Navy deployed relief teams to evacuate residents affected by severe flooding in Mahawa, Kurunegala and Eluwankulam, Puttalam. Th"
+9d2d8d31-b333-46e2-be47-4bfaa07b5626,2025-12-05T03:01:06.136533,political,medium,risk,0.05,"Colombo Political: Sri Lanka’s 2024 Census records a population of 21,763,170. Colombo and Gampaha exceed 2 million residents, while Kurunegala, Kandy, Kalutara, Ratnapura and Galle each top 1 million."
+7934f8d0-9408-4411-9c35-1071987a7236,2025-12-05T03:01:06.684125,political,medium,risk,0.05,"Kurunegala Political: #MASJID #SRILANKA 023. MASJID AL JAMIUL AZHAR/ KURUNEGALA GRAND MASJID Kurunegala, Kurunegala, Sri Lanka Berdiri tahun 1923 Kapasitas - jamaah ."
+eec74ba9-fb6a-4770-842c-a7b766b3bc4f,2025-12-05T03:01:07.403890,political,medium,risk,0.05,"Kurunegala Political: #MASJID #SRILANKA 024. MASJID AL HUDA OTTUKULAMA Galgamuwa, Kurunegala, Sri Lanka Berdiri tahun 2006 Kapasitas - jamaah ."
+20a01a13-1b6d-4512-8e6e-7ad6e8bb1d4a,2025-12-05T03:01:08.072322,political,medium,risk,0.05,"Sri Lanka Political: Dry Food Distribution for Cyclone Ditwa–Affected Families
+Date: 03 December 2025… See more"
+e7e29671-6e11-4cbe-8f0d-fe7ab12f613c,2025-12-05T03:01:08.691320,political,medium,risk,0.05,"Sri Lanka Political Summary: **Executive Summary**
+
+Sri Lanka’s political scene is marked by two headline‑making events. Opposition leader Sajith Premadasa’s recent visit to India underscores a strategic pivot toward deeper regional ties, highlighted by India’s $4.2 billion lifeline and proposals for parliamentary, energy, and "

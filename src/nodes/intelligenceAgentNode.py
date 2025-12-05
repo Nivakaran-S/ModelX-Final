@@ -2,6 +2,9 @@
 src/nodes/intelligenceAgentNode.py
 MODULAR - Intelligence Agent Node with Subgraph Architecture
 Three modules: Profile Monitoring, Competitive Intelligence, Feed Generation
+
+Updated: Uses Tool Factory pattern for parallel execution safety.
+Each agent instance gets its own private set of tools.
 """
 import json
 import uuid
@@ -10,7 +13,7 @@ import os
 from typing import List, Dict, Any
 from datetime import datetime
 from src.states.intelligenceAgentState import IntelligenceAgentState
-from src.utils.utils import TOOL_MAPPING
+from src.utils.tool_factory import create_tool_set
 from src.llms.groqllm import GroqLLM
 from src.utils.db_manager import Neo4jManager, ChromaDBManager, generate_content_hash, extract_post_data
 
@@ -21,10 +24,18 @@ class IntelligenceAgentNode:
     Module 1: Profile Monitoring (Twitter, Facebook, LinkedIn, Instagram)
     Module 2: Competitive Intelligence (Competitor mentions, Product reviews, Market analysis)
     Module 3: Feed Generation (Categorize, Summarize, Format)
+    
+    Thread Safety:
+        Each IntelligenceAgentNode instance creates its own private ToolSet,
+        enabling safe parallel execution with other agents.
     """
     
     def __init__(self, llm=None):
-        """Initialize with Groq LLM"""
+        """Initialize with Groq LLM and private tool set"""
+        # Create PRIVATE tool instances for this agent
+        # This enables parallel execution without shared state conflicts
+        self.tools = create_tool_set()
+        
         if llm is None:
             groq = GroqLLM()
             self.llm = groq.get_llm()
@@ -60,7 +71,7 @@ class IntelligenceAgentNode:
         
         # Twitter Profiles
         try:
-            twitter_profile_tool = TOOL_MAPPING.get("scrape_twitter_profile")
+            twitter_profile_tool = self.tools.get("scrape_twitter_profile")
             if twitter_profile_tool:
                 for username in self.competitor_profiles.get("twitter", []):
                     try:
@@ -84,7 +95,7 @@ class IntelligenceAgentNode:
         
         # Facebook Profiles
         try:
-            fb_profile_tool = TOOL_MAPPING.get("scrape_facebook_profile")
+            fb_profile_tool = self.tools.get("scrape_facebook_profile")
             if fb_profile_tool:
                 for page_name in self.competitor_profiles.get("facebook", []):
                     try:
@@ -109,7 +120,7 @@ class IntelligenceAgentNode:
         
         # LinkedIn Profiles
         try:
-            linkedin_profile_tool = TOOL_MAPPING.get("scrape_linkedin_profile")
+            linkedin_profile_tool = self.tools.get("scrape_linkedin_profile")
             if linkedin_profile_tool:
                 for company in self.competitor_profiles.get("linkedin", []):
                     try:
@@ -150,7 +161,7 @@ class IntelligenceAgentNode:
         
         # Twitter competitor tracking
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 for competitor in self.local_competitors[:3]:
                     try:
@@ -174,7 +185,7 @@ class IntelligenceAgentNode:
         
         # Reddit competitor discussions
         try:
-            reddit_tool = TOOL_MAPPING.get("scrape_reddit")
+            reddit_tool = self.tools.get("scrape_reddit")
             if reddit_tool:
                 for competitor in self.local_competitors[:2]:
                     try:
@@ -210,7 +221,7 @@ class IntelligenceAgentNode:
         review_results = []
         
         try:
-            review_tool = TOOL_MAPPING.get("scrape_product_reviews")
+            review_tool = self.tools.get("scrape_product_reviews")
             if review_tool:
                 for product in self.product_watchlist:
                     try:
@@ -248,7 +259,7 @@ class IntelligenceAgentNode:
         
         # Industry news and trends
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 for keyword in ["telecom sri lanka", "5G sri lanka", "fiber broadband"]:
                     try:
@@ -440,21 +451,80 @@ Source: Multi-platform competitive intelligence (Twitter, Facebook, LinkedIn, In
             "global_intel": global_intel
         }
         
-        insight = {
+        # Create list for per-item domain_insights (FRONTEND COMPATIBLE)
+        domain_insights = []
+        timestamp = datetime.utcnow().isoformat()
+        
+        # 1. Create per-profile intelligence insights
+        for profile_name, posts in profile_feeds.items():
+            if not isinstance(posts, list):
+                continue
+            for post in posts[:5]:
+                post_text = post.get("text", "") or post.get("title", "")
+                if not post_text or len(post_text) < 10:
+                    continue
+                domain_insights.append({
+                    "source_event_id": str(uuid.uuid4()),
+                    "domain": "intelligence",
+                    "summary": f"Profile ({profile_name}): {post_text[:200]}",
+                    "severity": "medium",
+                    "impact_type": "risk",
+                    "timestamp": timestamp
+                })
+        
+        # 2. Create per-competitor intelligence insights
+        for competitor, posts in competitor_feeds.items():
+            if not isinstance(posts, list):
+                continue
+            for post in posts[:5]:
+                post_text = post.get("text", "") or post.get("title", "")
+                if not post_text or len(post_text) < 10:
+                    continue
+                severity = "high" if any(kw in post_text.lower() for kw in ["launch", "expansion", "acquisition"]) else "medium"
+                domain_insights.append({
+                    "source_event_id": str(uuid.uuid4()),
+                    "domain": "intelligence",
+                    "summary": f"Competitor ({competitor}): {post_text[:200]}",
+                    "severity": severity,
+                    "impact_type": "risk",
+                    "timestamp": timestamp
+                })
+        
+        # 3. Create per-product review insights
+        for product, reviews in product_feeds.items():
+            if not isinstance(reviews, list):
+                continue
+            for review in reviews[:5]:
+                review_text = review.get("text", "") or review.get("title", "")
+                if not review_text or len(review_text) < 10:
+                    continue
+                severity = "low" if any(kw in review_text.lower() for kw in ["great", "excellent", "love"]) else "medium"
+                impact = "opportunity" if severity == "low" else "risk"
+                domain_insights.append({
+                    "source_event_id": str(uuid.uuid4()),
+                    "domain": "intelligence",
+                    "summary": f"Product Review ({product}): {review_text[:200]}",
+                    "severity": severity,
+                    "impact_type": impact,
+                    "timestamp": timestamp
+                })
+        
+        # 4. Add executive summary insight
+        domain_insights.append({
             "source_event_id": str(uuid.uuid4()),
             "structured_data": structured_feeds,
             "domain": "intelligence",
-            "summary": llm_summary[:500],  # Include summary for FeedAggregator
+            "summary": f"Business Intelligence Summary: {llm_summary[:300]}",
             "severity": "medium",
             "impact_type": "risk"
-        }
+        })
         
-        print("  ✓ Final Feed Formatted")
+        print(f"  ✓ Created {len(domain_insights)} intelligence insights")
         
         return {
             "final_feed": bulletin,
             "feed_history": [bulletin],
-            "domain_insights": [insight]
+            "domain_insights": domain_insights
         }
     
     # ============================================

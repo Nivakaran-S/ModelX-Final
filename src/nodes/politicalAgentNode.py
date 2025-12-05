@@ -2,13 +2,16 @@
 src/nodes/politicalAgentNode.py
 MODULAR - Political Agent Node with Subgraph Architecture
 Three modules: Official Sources, Social Media Collection, Feed Generation
+
+Updated: Uses Tool Factory pattern for parallel execution safety.
+Each agent instance gets its own private set of tools.
 """
 import json
 import uuid
 from typing import List, Dict, Any
 from datetime import datetime
 from src.states.politicalAgentState import PoliticalAgentState
-from src.utils.utils import TOOL_MAPPING
+from src.utils.tool_factory import create_tool_set
 from src.llms.groqllm import GroqLLM
 
 
@@ -18,10 +21,17 @@ class PoliticalAgentNode:
     Module 1: Official Sources (Gazette, Parliament)
     Module 2: Social Media (National, District, World)
     Module 3: Feed Generation (Categorize, Summarize, Format)
+    
+    Thread Safety:
+        Each PoliticalAgentNode instance creates its own private ToolSet,
+        enabling safe parallel execution with other agents.
     """
     
     def __init__(self, llm=None):
-        """Initialize with Groq LLM"""
+        """Initialize with Groq LLM and private tool set"""
+        # Create PRIVATE tool instances for this agent
+        self.tools = create_tool_set()
+        
         if llm is None:
             groq = GroqLLM()
             self.llm = groq.get_llm()
@@ -57,7 +67,7 @@ class PoliticalAgentNode:
         
         # Government Gazette
         try:
-            gazette_tool = TOOL_MAPPING.get("scrape_government_gazette")
+            gazette_tool = self.tools.get("scrape_government_gazette")
             if gazette_tool:
                 gazette_data = gazette_tool.invoke({
                     "keywords": ["sri lanka tax", "sri lanka regulation", "sri lanka policy"],
@@ -76,7 +86,7 @@ class PoliticalAgentNode:
         
         # Parliament Minutes
         try:
-            parliament_tool = TOOL_MAPPING.get("scrape_parliament_minutes")
+            parliament_tool = self.tools.get("scrape_parliament_minutes")
             if parliament_tool:
                 parliament_data = parliament_tool.invoke({
                     "keywords": ["sri lanka bill", "sri lanka amendment", "sri lanka budget"],
@@ -112,7 +122,7 @@ class PoliticalAgentNode:
         
         # Twitter - National
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "sri lanka politics government",
@@ -131,7 +141,7 @@ class PoliticalAgentNode:
         
         # Facebook - National
         try:
-            facebook_tool = TOOL_MAPPING.get("scrape_facebook")
+            facebook_tool = self.tools.get("scrape_facebook")
             if facebook_tool:
                 facebook_data = facebook_tool.invoke({
                     "keywords": ["sri lanka politics", "sri lanka government"],
@@ -150,7 +160,7 @@ class PoliticalAgentNode:
         
         # LinkedIn - National
         try:
-            linkedin_tool = TOOL_MAPPING.get("scrape_linkedin")
+            linkedin_tool = self.tools.get("scrape_linkedin")
             if linkedin_tool:
                 linkedin_data = linkedin_tool.invoke({
                     "keywords": ["sri lanka policy", "sri lanka government"],
@@ -169,7 +179,7 @@ class PoliticalAgentNode:
         
         # Instagram - National
         try:
-            instagram_tool = TOOL_MAPPING.get("scrape_instagram")
+            instagram_tool = self.tools.get("scrape_instagram")
             if instagram_tool:
                 instagram_data = instagram_tool.invoke({
                     "keywords": ["srilankapolitics"],
@@ -188,7 +198,7 @@ class PoliticalAgentNode:
         
         # Reddit - National
         try:
-            reddit_tool = TOOL_MAPPING.get("scrape_reddit")
+            reddit_tool = self.tools.get("scrape_reddit")
             if reddit_tool:
                 reddit_data = reddit_tool.invoke({
                     "keywords": ["sri lanka politics"],
@@ -222,7 +232,7 @@ class PoliticalAgentNode:
         for district in self.key_districts:
             # Twitter per district
             try:
-                twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+                twitter_tool = self.tools.get("scrape_twitter")
                 if twitter_tool:
                     twitter_data = twitter_tool.invoke({
                         "query": f"{district} sri lanka",
@@ -242,7 +252,7 @@ class PoliticalAgentNode:
             
             # Facebook per district
             try:
-                facebook_tool = TOOL_MAPPING.get("scrape_facebook")
+                facebook_tool = self.tools.get("scrape_facebook")
                 if facebook_tool:
                     facebook_data = facebook_tool.invoke({
                         "keywords": [f"{district} sri lanka"],
@@ -275,7 +285,7 @@ class PoliticalAgentNode:
         
         # Twitter - World Politics
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "sri lanka international relations IMF",
@@ -439,22 +449,68 @@ Districts monitored: {', '.join([d.title() for d in self.key_districts])}
 Source: Multi-platform aggregation (Twitter, Facebook, LinkedIn, Instagram, Reddit, Government Gazette, Parliament)
 """
         
-        # Create integration output
-        insight = {
+        # Create list for per-item domain_insights (FRONTEND COMPATIBLE)
+        domain_insights = []
+        timestamp = datetime.utcnow().isoformat()
+        
+        # Sri Lankan districts for geographic tagging
+        districts = [
+            "colombo", "gampaha", "kalutara", "kandy", "matale", 
+            "nuwara eliya", "galle", "matara", "hambantota", 
+            "jaffna", "kilinochchi", "mannar", "mullaitivu", "vavuniya",
+            "puttalam", "kurunegala", "anuradhapura", "polonnaruwa",
+            "badulla", "monaragala", "ratnapura", "kegalle",
+            "ampara", "batticaloa", "trincomalee"
+        ]
+        
+        # 1. Create per-item political insights
+        for category, posts in structured_feeds.items():
+            if not isinstance(posts, list):
+                continue
+            for post in posts[:10]:
+                post_text = post.get("text", "") or post.get("title", "")
+                if not post_text or len(post_text) < 10:
+                    continue
+                
+                # Try to detect district from post text
+                detected_district = "Sri Lanka"
+                for district in districts:
+                    if district.lower() in post_text.lower():
+                        detected_district = district.title()
+                        break
+                
+                # Determine severity based on keywords
+                severity = "medium"
+                if any(kw in post_text.lower() for kw in ["parliament", "president", "minister", "election", "policy", "bill"]):
+                    severity = "high"
+                elif any(kw in post_text.lower() for kw in ["protest", "opposition", "crisis"]):
+                    severity = "high"
+                
+                domain_insights.append({
+                    "source_event_id": str(uuid.uuid4()),
+                    "domain": "political",
+                    "summary": f"{detected_district} Political: {post_text[:200]}",
+                    "severity": severity,
+                    "impact_type": "risk",
+                    "timestamp": timestamp
+                })
+        
+        # 2. Add executive summary insight
+        domain_insights.append({
             "source_event_id": str(uuid.uuid4()),
             "structured_data": structured_feeds,
             "domain": "political",
-            "summary": llm_summary[:500],
+            "summary": f"Sri Lanka Political Summary: {llm_summary[:300]}",
             "severity": "medium",
             "impact_type": "risk"
-        }
+        })
         
-        print("  ✓ Final Feed Formatted")
+        print(f"  ✓ Created {len(domain_insights)} political insights")
         
         return {
             "final_feed": bulletin,
             "feed_history": [bulletin],
-            "domain_insights": [insight]
+            "domain_insights": domain_insights
         }
     
     # ============================================

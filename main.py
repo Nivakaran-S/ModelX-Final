@@ -1,21 +1,32 @@
 """
-backend/api/main.py
-PRODUCTION - Resilient WebSocket handling with server heartbeat + robust broadcast
+main.py
+Production-Ready Real-Time Intelligence Platform Backend
+- Uses combinedAgentGraph for multi-agent orchestration
+- Threading for concurrent graph execution and WebSocket server
+- Database-driven feed updates with polling
+- Duplicate prevention
+- District-based feed categorization for map display
+
+Updated: Resilient WebSocket handling for long scraping operations (60s+ cycles)
 """
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Set
 import asyncio
 import json
 from datetime import datetime
 import sys
 import os
 import logging
+import threading
+import time
+import uuid  # CRITICAL: Was missing, needed for event_id generation
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from src.graphs.ModelXGraph import graph
+from src.graphs.combinedAgentGraph import graph
 from src.states.combinedAgentState import CombinedAgentState
+from src.storage.storage_manager import StorageManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("modelx_api")
@@ -30,6 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Global state
 current_state: Dict[str, Any] = {
     "final_ranked_feed": [],
     "risk_dashboard_snapshot": {
@@ -43,36 +55,43 @@ current_state: Dict[str, Any] = {
         "last_updated": datetime.utcnow().isoformat()
     },
     "run_count": 0,
-    "status": "initializing"
+    "status": "initializing",
+    "first_run_complete": False  # Track first graph execution
 }
 
-# Heartbeat settings (tune as needed)
-HEARTBEAT_INTERVAL = 25.0      # seconds between pings
-HEARTBEAT_TIMEOUT = 10.0       # seconds to wait for a pong
-HEARTBEAT_MISS_THRESHOLD = 3   # disconnect after this many missed pongs
-SEND_TIMEOUT = 5.0             # timeout for socket send operations
+# Thread-safe communication
+feed_update_queue = asyncio.Queue()
+seen_event_ids: Set[str] = set()  # Duplicate prevention
+
+# Global event loop reference for cross-thread broadcasting
+main_event_loop = None
+
+# Storage manager
+storage_manager = StorageManager()
+
+# WebSocket settings - RESILIENT for long scraping operations (60s+ graph cycles)
+# Increased intervals to prevent disconnections during lengthy scraping
+HEARTBEAT_INTERVAL = 45.0  # Send ping every 45s (was 25s)
+HEARTBEAT_TIMEOUT = 30.0   # Wait 30s for pong (was 10s) 
+HEARTBEAT_MISS_THRESHOLD = 4  # Allow 4 misses (was 3) = ~3 minutes tolerance
+SEND_TIMEOUT = 10.0  # Increased from 5s
 
 class ConnectionManager:
-    """
-    Manages active WebSocket connections with per-connection heartbeat tasks and metadata.
-    """
+    """Manages active WebSocket with heartbeat"""
     def __init__(self):
-        # Map WebSocket -> metadata dict
-        # metadata: { "heartbeat_task": asyncio.Task, "last_pong": datetime, "misses": int }
         self.active_connections: Dict[WebSocket, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         async with self._lock:
-            # Initialize metadata
             meta = {
                 "heartbeat_task": asyncio.create_task(self._heartbeat_loop(websocket)),
                 "last_pong": datetime.utcnow(),
                 "misses": 0
             }
             self.active_connections[websocket] = meta
-            logger.info(f"✓ WebSocket connected. Total: {len(self.active_connections)}")
+            logger.info(f"[WebSocket] Connected. Total: {len(self.active_connections)}")
 
     async def disconnect(self, websocket: WebSocket):
         async with self._lock:
@@ -89,39 +108,32 @@ class ConnectionManager:
                 await websocket.close()
             except Exception:
                 pass
-            logger.info(f"WebSocket disconnected. Total: {len(self.active_connections)}")
+            logger.info(f"[WebSocket] Disconnected. Total: {len(self.active_connections)}")
 
     async def _send_with_timeout(self, websocket: WebSocket, message_json: str):
         try:
             await asyncio.wait_for(websocket.send_text(message_json), timeout=SEND_TIMEOUT)
             return True
         except Exception as e:
-            logger.debug(f"[SEND] send failed: {e}")
+            logger.debug(f"[WebSocket] Send failed: {e}")
             return False
 
     async def _heartbeat_loop(self, websocket: WebSocket):
-        """
-        Per-connection heartbeat task. Sends ping periodically and expects a 'pong' message
-        from client within HEARTBEAT_TIMEOUT. Disconnects after HEARTBEAT_MISS_THRESHOLD misses.
-        """
+        """Per-connection heartbeat task"""
         try:
             while True:
                 await asyncio.sleep(HEARTBEAT_INTERVAL)
                 if websocket not in self.active_connections:
                     break
 
-                # Send ping
                 ping_payload = json.dumps({"type": "ping"})
                 ok = await self._send_with_timeout(websocket, ping_payload)
                 if not ok:
-                    # send failed — increment miss counter
                     async with self._lock:
                         meta = self.active_connections.get(websocket)
                         if meta is not None:
                             meta['misses'] += 1
-                            logger.info(f"[HEARTBEAT] send failed, misses={meta['misses']}")
                 else:
-                    # sent; now wait up to HEARTBEAT_TIMEOUT for pong
                     waited = 0.0
                     sleep_step = 0.5
                     pong_received = False
@@ -131,9 +143,7 @@ class ConnectionManager:
                         async with self._lock:
                             meta = self.active_connections.get(websocket)
                             if meta is None:
-                                # connection removed elsewhere
                                 return
-                            # If last_pong was updated recently, treat as pong
                             last_pong = meta.get("last_pong")
                             if last_pong and (datetime.utcnow() - last_pong).total_seconds() < (HEARTBEAT_INTERVAL + HEARTBEAT_TIMEOUT):
                                 pong_received = True
@@ -144,38 +154,31 @@ class ConnectionManager:
                             meta = self.active_connections.get(websocket)
                             if meta is not None:
                                 meta['misses'] += 1
-                                logger.info(f"[HEARTBEAT] no pong received, misses={meta['misses']}")
 
-                # If misses exceed threshold -> drop connection
                 async with self._lock:
                     meta = self.active_connections.get(websocket)
                     if meta is None:
                         return
                     if meta.get('misses', 0) >= HEARTBEAT_MISS_THRESHOLD:
-                        logger.warning("[HEARTBEAT] Miss threshold exceeded, disconnecting client")
-                        # Best-effort close and cleanup
+                        logger.warning("[WebSocket] Miss threshold exceeded, disconnecting")
                         try:
                             await websocket.close(code=1001)
                         except Exception:
                             pass
-                        # remove from active_connections
                         await self.disconnect(websocket)
                         return
 
         except asyncio.CancelledError:
             return
         except Exception as e:
-            logger.exception(f"[HEARTBEAT] Unexpected error: {e}")
-            # Ensure connection is cleaned up
+            logger.exception(f"[WebSocket] Heartbeat error: {e}")
             try:
                 await self.disconnect(websocket)
             except Exception:
                 pass
 
     async def broadcast(self, message: dict):
-        """
-        Broadcast a JSON message to all active connections. Clean up dead ones.
-        """
+        """Broadcast to all connections"""
         async with self._lock:
             conns = list(self.active_connections.keys())
         if not conns:
@@ -187,162 +190,200 @@ class ConnectionManager:
             if not ok:
                 dead.append(conn)
         for conn in dead:
-            logger.info("[BROADCAST] removing dead connection")
+            logger.info("[WebSocket] Removing dead connection")
             await self.disconnect(conn)
 
 manager = ConnectionManager()
 
-def extract_state_data(node_output) -> Dict[str, Any]:
-    """
-    Extract data from node output regardless of format
-    Handles: Pydantic models, dicts, objects with __dict__
-    """
-    data = {}
-    
-    # Try method 1: model_dump() for Pydantic v2
-    if hasattr(node_output, 'model_dump'):
-        try:
-            data = node_output.model_dump()
-            logger.debug(f"[EXTRACT] Used model_dump()")
-            return data
-        except:
-            pass
-    
-    # Try method 2: dict() for Pydantic v1
-    if hasattr(node_output, 'dict'):
-        try:
-            data = node_output.dict()
-            logger.debug(f"[EXTRACT] Used dict()")
-            return data
-        except:
-            pass
-    
-    # Try method 3: Direct dict conversion
-    if isinstance(node_output, dict):
-        logger.debug(f"[EXTRACT] Already a dict")
-        return node_output
-    
-    # Try method 4: __dict__ attribute
-    if hasattr(node_output, '__dict__'):
-        logger.debug(f"[EXTRACT] Used __dict__")
-        return node_output.__dict__
-    
-    # Try method 5: Direct attribute access
-    result = {}
-    for attr in ['final_ranked_feed', 'risk_dashboard_snapshot', 'run_count', 'domain_insights', 'route']:
-        if hasattr(node_output, attr):
-            result[attr] = getattr(node_output, attr)
-    
-    if result:
-        logger.debug(f"[EXTRACT] Used direct attributes")
-        return result
-    
-    logger.warning(f"[EXTRACT] Could not extract data from {type(node_output)}")
-    return {}
 
-async def run_graph_loop():
-    """Run graph and extract state properly"""
-    global current_state
+def categorize_feed_by_district(feed: Dict[str, Any]) -> str:
+    """
+    Categorize feed by Sri Lankan district based on summary text.
+    Returns district name or "National" if not district-specific.
+    """
+    summary = feed.get("summary", "").lower()
     
-    logger.info("=" * 80)
-    logger.info("STARTING MODELX GRAPH LOOP")
-    logger.info("=" * 80)
+    # Sri Lankan districts
+    districts = [
+        "Colombo", "Gampaha", "Kalutara", "Kandy", "Matale", "Nuwara Eliya",
+        "Galle", "Matara", "Hambantota", "Jaffna", "Kilinochchi", "Mannar",
+        "Vavuniya", "Mullaitivu", "Batticaloa", "Ampara", "Trincomalee",
+        "Kurunegala", "Puttalam", "Anuradhapura", "Polonnaruwa", "Badulla",
+        "Moneragala", "Ratnapura", "Kegalle"
+    ]
+    
+    for district in districts:
+        if district.lower() in summary:
+            return district
+    
+    return "National"
+
+
+def run_graph_loop():
+    """
+    Graph execution in separate thread.
+    Runs the combinedAgentGraph and stores results in database.
+    """
+    logger.info("="*80)
+    logger.info("[GRAPH THREAD] Starting ModelX combinedAgentGraph loop")
+    logger.info("="*80)
     
     initial_state = CombinedAgentState(
         domain_insights=[],
         final_ranked_feed=[],
         run_count=0,
-        max_runs=999,
+        max_runs=999,  # Continuous mode
         route=None
     )
     
     try:
-        async for event in graph.astream(initial_state):
-            logger.info(f"[EVENT] Nodes: {list(event.keys())}")
+        # Note: Using synchronous invoke since we're in a thread
+        for event in graph.stream(initial_state):
+            logger.info(f"[GRAPH] Event nodes: {list(event.keys())}")
             
             for node_name, node_output in event.items():
-                logger.info(f"[NODE] Processing: {node_name}")
-                
-                # Extract state data using our helper
-                state_data = extract_state_data(node_output)
-                
-                if not state_data:
-                    logger.warning(f"[NODE] {node_name} - No data extracted")
+                # Extract feed data
+                if hasattr(node_output, 'final_ranked_feed'):
+                    feeds = node_output.final_ranked_feed
+                elif isinstance(node_output, dict):
+                    feeds = node_output.get('final_ranked_feed', [])
+                else:
                     continue
                 
-                logger.info(f"[NODE] {node_name} - Extracted keys: {list(state_data.keys())}")
-                
-                # Update current_state with extracted data
-                updated = False
-                
-                # Extract feed
-                if 'final_ranked_feed' in state_data and state_data['final_ranked_feed']:
-                    feed = state_data['final_ranked_feed']
-                    logger.info(f"[NODE] {node_name} - Found feed with {len(feed)} items")
+                if feeds:
+                    logger.info(f"[GRAPH] {node_name} produced {len(feeds)} feeds")
                     
-                    events = []
-                    for e in feed:
-                        # Handle both dict and object formats
-                        if isinstance(e, dict):
-                            event_data = e
+                    # FIELD_NORMALIZATION: Transform graph format to frontend format
+                    for feed_item in feeds:
+                        if isinstance(feed_item, dict):
+                            event_data = feed_item
                         else:
-                            event_data = extract_state_data(e)
+                            event_data = feed_item.__dict__ if hasattr(feed_item, '__dict__') else {}
                         
-                        events.append({
-                            "event_id": event_data.get("event_id", "unknown"),
-                            "domain": event_data.get("target_agent", event_data.get("domain", "unknown")),
-                            "severity": event_data.get("severity", "medium"),
-                            "impact_type": event_data.get("impact_type", "risk"),
-                            "summary": event_data.get("content_summary", event_data.get("summary", "")),
-                            "confidence": event_data.get("confidence_score", event_data.get("confidence", 0.5)),
-                            "timestamp": event_data.get("timestamp", datetime.utcnow().isoformat())
-                        })
-                    
-                    current_state['final_ranked_feed'] = events
-                    updated = True
-                    logger.info(f"[UPDATE] Feed updated with {len(events)} events")
+                        # Normalize field names: graph uses content_summary/target_agent, frontend expects summary/domain
+                        event_id = event_data.get("event_id", str(uuid.uuid4()))
+                        summary = event_data.get("content_summary") or event_data.get("summary", "")
+                        domain = event_data.get("target_agent") or event_data.get("domain", "unknown")
+                        severity = event_data.get("severity", "medium")
+                        impact_type = event_data.get("impact_type", "risk")
+                        confidence = event_data.get("confidence_score", event_data.get("confidence", 0.5))
+                        timestamp = event_data.get("timestamp", datetime.utcnow().isoformat())
+                        
+                        # Check for duplicates
+                        is_dup, _, _ = storage_manager.is_duplicate(summary)
+                        
+                        if not is_dup:
+                            try:
+                                storage_manager.store_event(
+                                    event_id=event_id,
+                                    summary=summary,
+                                    domain=domain,
+                                    severity=severity,
+                                    impact_type=impact_type,
+                                    confidence_score=confidence
+                                )
+                                logger.info(f"[GRAPH] Stored new feed: {summary[:60]}...")
+                            except Exception as storage_error:
+                                logger.warning(f"[GRAPH] Storage error (continuing): {storage_error}")
+                            
+                            # DIRECT_BROADCAST_FIX: Set first_run_complete and broadcast
+                            if not current_state.get('first_run_complete'):
+                                current_state['first_run_complete'] = True
+                                current_state['status'] = 'operational'
+                                logger.info("[GRAPH] FIRST RUN COMPLETE - Broadcasting to frontend!")
+                                
+                                # Trigger broadcast from sync thread to async loop
+                                if main_event_loop:
+                                    asyncio.run_coroutine_threadsafe(
+                                        manager.broadcast(current_state),
+                                        main_event_loop
+                                    )
                 
-                # Extract dashboard
-                if 'risk_dashboard_snapshot' in state_data and state_data['risk_dashboard_snapshot']:
-                    dashboard = state_data['risk_dashboard_snapshot']
-                    current_state['risk_dashboard_snapshot'] = dashboard
-                    updated = True
-                    logger.info(f"[UPDATE] Dashboard updated")
+                # Small delay to prevent CPU overload
+                time.sleep(0.3)
                 
-                # Extract run count
-                if 'run_count' in state_data:
-                    current_state['run_count'] = state_data['run_count']
-                    updated = True
-                    logger.info(f"[UPDATE] Run count: {state_data['run_count']}")
+    except Exception as e:
+        logger.error(f"[GRAPH THREAD] Error: {e}", exc_info=True)
+
+
+async def database_polling_loop():
+    """
+    Polls database for new feeds and broadcasts via WebSocket.
+    Runs concurrently with graph thread.
+    """
+    global current_state
+    last_check = datetime.utcnow()
+    
+    logger.info("[DB_POLLER] Starting database polling loop")
+    
+    while True:
+        try:
+            await asyncio.sleep(2.0)  # Poll every 2 seconds
+            
+            # Get new feeds since last check
+            new_feeds = storage_manager.get_feeds_since(last_check)
+            last_check = datetime.utcnow()
+            
+            if new_feeds:
+                logger.info(f"[DB_POLLER] Found {len(new_feeds)} new feeds")
                 
-                if updated:
+                # Filter duplicates (by event_id)
+                unique_feeds = []
+                for feed in new_feeds:
+                    event_id = feed.get("event_id")
+                    if event_id and event_id not in seen_event_ids:
+                        seen_event_ids.add(event_id)
+                        
+                        # Add district categorization for map
+                        feed["district"] = categorize_feed_by_district(feed)
+                        unique_feeds.append(feed)
+                
+                if unique_feeds:
+                    # Update current state
+                    current_state['final_ranked_feed'] = unique_feeds + current_state.get('final_ranked_feed', [])
+                    current_state['final_ranked_feed'] = current_state['final_ranked_feed'][:100]  # Keep last 100
                     current_state['status'] = 'operational'
                     current_state['last_update'] = datetime.utcnow().isoformat()
                     
-                    broadcast_payload = {**current_state}
-                    await manager.broadcast(broadcast_payload)
-                    logger.info(f"[BROADCAST] Sent update to {len(manager.active_connections)} clients")
-                
-                await asyncio.sleep(0.3)
-                
-    except Exception as e:
-        logger.error(f"[ERROR] Graph loop failed: {e}", exc_info=True)
-        current_state['status'] = 'error'
-        current_state['error'] = str(e)
+                    # Mark first run as complete (frontend loading screen can now hide)
+                    if not current_state.get('first_run_complete'):
+                        current_state['first_run_complete'] = True
+                        logger.info("[DB_POLLER] First graph run complete! Frontend loading screen can now hide.")
+                    
+                    # Broadcast to WebSocket clients
+                    await manager.broadcast(current_state)
+                    logger.info(f"[DB_POLLER] Broadcasted {len(unique_feeds)} unique feeds")
+            
+        except Exception as e:
+            logger.error(f"[DB_POLLER] Error: {e}")
+
+
 
 @app.on_event("startup")
 async def startup_event():
+    global main_event_loop
+    main_event_loop = asyncio.get_event_loop()
+    
     logger.info("[API] Starting ModelX API...")
-    # Start the graph loop as background task
-    asyncio.create_task(run_graph_loop())
+    
+    # Start graph execution in separate thread
+    graph_thread = threading.Thread(target=run_graph_loop, daemon=True)
+    graph_thread.start()
+    logger.info("[API] Graph thread started")
+    
+    # Start database polling loop
+    asyncio.create_task(database_polling_loop())
+    logger.info("[API] Database polling started")
+
 
 @app.get("/")
 def read_root():
     return {
         "service": "ModelX Intelligence Platform",
         "status": current_state.get("status"),
-        "version": "1.0.0"
+        "version": "2.0.0 (Database-Driven)"
     }
+
 
 @app.get("/api/status")
 def get_status():
@@ -354,80 +395,92 @@ def get_status():
         "total_events": len(current_state.get("final_ranked_feed", []))
     }
 
+
 @app.get("/api/dashboard")
 def get_dashboard():
     return current_state.get("risk_dashboard_snapshot", {})
 
+
 @app.get("/api/feed")
 def get_feed():
+    """Get current feed from memory"""
     return {
         "events": current_state.get("final_ranked_feed", []),
         "total": len(current_state.get("final_ranked_feed", []))
     }
 
-@app.get("/api/storage/stats")
-def get_storage_stats():
-    """
-    Get comprehensive storage statistics.
-    Shows deduplication rates, database stats, etc.
-    """
+
+@app.get("/api/feeds")
+def get_feeds_from_db(limit: int = 100):
+    """Get feeds directly from database (for initial load)"""
     try:
-        # Try to get stats from the graph's storage manager
-        # This requires accessing the CombinedAgentNode instance
+        feeds = storage_manager.get_recent_feeds(limit=limit)
+        
+        # FIELD_NORMALIZATION + district categorization
+        normalized_feeds = []
+        for feed in feeds:
+            # Ensure frontend-compatible field names
+            normalized = {
+                "event_id": feed.get("event_id"),
+                "summary": feed.get("summary", ""),
+                "domain": feed.get("domain", "unknown"),
+                "severity": feed.get("severity", "medium"),
+                "impact_type": feed.get("impact_type", "risk"),
+                "confidence": feed.get("confidence", 0.5),
+                "timestamp": feed.get("timestamp"),
+                "district": categorize_feed_by_district(feed)
+            }
+            normalized_feeds.append(normalized)
+        
         return {
-            "status": "active",
-            "note": "Storage stats available after first graph execution",
-            "endpoints": [
-                "/api/storage/stats - Storage system statistics",
-                "/api/knowledge/clusters - Event similarity clusters (Neo4j)",
-                "/api/knowledge/domains - Domain distribution (Neo4j)"
-            ]
+            "events": normalized_feeds,
+            "total": len(normalized_feeds),
+            "source": "database"
         }
     except Exception as e:
-        logger.error(f"[API] Storage stats error: {e}")
+        logger.error(f"[API] Error fetching feeds: {e}")
+        return {"events": [], "total": 0, "error": str(e)}
+
+
+@app.get("/api/feeds/by_district/{district}")
+def get_feeds_by_district(district: str, limit: int = 50):
+    """Get feeds for specific district"""
+    try:
+        all_feeds = storage_manager.get_recent_feeds(limit=200)
+        
+        # Filter by district
+        district_feeds = []
+        for feed in all_feeds:
+            feed["district"] = categorize_feed_by_district(feed)
+            if feed["district"].lower() == district.lower():
+                district_feeds.append(feed)
+                if len(district_feeds) >= limit:
+                    break
+        
         return {
-            "status": "error",
-            "error": str(e)
+            "district": district,
+            "events": district_feeds,
+            "total": len(district_feeds)
         }
-
-@app.get("/api/knowledge/clusters")
-def get_event_clusters():
-    """
-    Get clusters of similar events from Neo4j knowledge graph.
-    """
-    return {
-        "clusters": [],
-        "note": "Neo4j integration - clusters available after events are processed"
-    }
-
-@app.get("/api/knowledge/domains")
-def get_domain_distribution():
-    """
-    Get event distribution by domain from Neo4j.
-    """
-    return {
-        "domains": [],
-        "note": "Neo4j integration - domain stats available after events are processed"
-    }
+    except Exception as e:
+        logger.error(f"[API] Error fetching district feeds: {e}")
+        return {"events": [], "total": 0, "error": str(e)}
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    # Accept and register connection (creates heartbeat task)
     await manager.connect(websocket)
     
     try:
-        # Send initial state right away (best-effort)
+        # Send initial state
         try:
             await websocket.send_text(json.dumps(current_state, default=str))
         except Exception as e:
             logger.debug(f"[WS] Initial send failed: {e}")
-            # If initial send fails, disconnect and return
             await manager.disconnect(websocket)
             return
 
-        # Main receive loop: we only expect 'pong' or optional client messages.
-        # We don't require any client messages to keep connection alive; heartbeat handles that.
+        # Main receive loop
         while True:
             try:
                 txt = await websocket.receive_text()
@@ -435,33 +488,28 @@ async def websocket_endpoint(websocket: WebSocket):
                 logger.info("[WS] Client disconnected")
                 break
             except Exception as e:
-                logger.debug(f"[WS] receive_text error: {e}")
-                # treat as disconnect
+                logger.debug(f"[WS] Receive error: {e}")
                 break
 
-            # Handle incoming message
+            # Handle pong responses
             try:
                 payload = json.loads(txt)
-                # If client responds to ping
                 if isinstance(payload, dict) and payload.get("type") == "pong":
-                    # Update last_pong timestamp for this connection
                     async with manager._lock:
                         meta = manager.active_connections.get(websocket)
                         if meta is not None:
                             meta['last_pong'] = datetime.utcnow()
                             meta['misses'] = 0
                     continue
-
-                # Other client messages can be processed here if you want
-                logger.debug(f"[WS] Received client message (ignored for now): {payload}")
             except json.JSONDecodeError:
-                logger.debug("[WS] Received non-json message (ignored)")
                 continue
 
     finally:
-        # Ensure cleanup
         await manager.disconnect(websocket)
+
 
 if __name__ == "__main__":
     import uvicorn
+    import uuid
+    
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

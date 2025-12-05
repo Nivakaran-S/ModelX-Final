@@ -119,6 +119,60 @@ class SQLiteCache:
         
         return deleted
     
+    def get_all_entries(self, limit: int = 100, offset: int = 0) -> list:
+        """
+        Paginated retrieval of all cached entries.
+        Returns list of dicts with event metadata.
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.execute(
+            'SELECT content_hash, first_seen, last_seen, event_id, summary_preview FROM seen_hashes ORDER BY last_seen DESC LIMIT ? OFFSET ?',
+            (limit, offset)
+        )
+        
+        results = []
+        for row in cursor.fetchall():
+            results.append({
+                "content_hash": row[0],
+                "first_seen": row[1],
+                "last_seen": row[2],
+                "event_id": row[3],
+                "summary_preview": row[4]
+            })
+        
+        conn.close()
+        return results
+    
+    def get_entries_since(self, timestamp: str) -> list:
+        """
+        Get entries added/updated after timestamp.
+        
+        Args:
+            timestamp: ISO format timestamp string
+            
+        Returns:
+            List of entry dicts
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.execute(
+            'SELECT content_hash, first_seen, last_seen, event_id, summary_preview FROM seen_hashes WHERE last_seen > ? ORDER BY last_seen DESC',
+            (timestamp,)
+        )
+        
+        results = []
+        for row in cursor.fetchall():
+            results.append({
+                "content_hash": row[0],
+                "first_seen": row[1],
+                "last_seen": row[2],
+                "event_id": row[3],
+                "summary_preview": row[4]
+            })
+        
+        conn.close()
+        return results
+    
+
     def get_stats(self) -> dict:
         """Get cache statistics"""
         conn = sqlite3.connect(self.db_path)

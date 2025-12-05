@@ -11,10 +11,15 @@ import { useModelXData } from "../hooks/use-modelx-data";
 import { Badge } from "../components/ui/badge";
 
 const Index = () => {
-  const { status, run_count, isConnected, first_run_complete } = useModelXData();
+  const { status, run_count, isConnected, first_run_complete, events } = useModelXData();
 
-  // Show loading screen until first graph run completes
-  if (status === 'initializing' || !first_run_complete) {
+  // Show loading screen until:
+  // 1. first_run_complete is true, OR
+  // 2. We have existing events from REST API (faster initial load)
+  // This ensures the loading screen disappears once ANY data is available
+  const isLoading = status === 'initializing' && !first_run_complete && (!events || events.length === 0);
+
+  if (isLoading) {
     return <LoadingScreen />;
   }
 

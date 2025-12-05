@@ -2,13 +2,16 @@
 src/nodes/economicalAgentNode.py
 MODULAR - Economical Agent Node with Subgraph Architecture
 Three modules: Official Sources, Social Media Collection, Feed Generation
+
+Updated: Uses Tool Factory pattern for parallel execution safety.
+Each agent instance gets its own private set of tools.
 """
 import json
 import uuid
 from typing import List, Dict, Any
 from datetime import datetime
 from src.states.economicalAgentState import EconomicalAgentState
-from src.utils.utils import TOOL_MAPPING
+from src.utils.tool_factory import create_tool_set
 from src.llms.groqllm import GroqLLM
 
 
@@ -18,10 +21,17 @@ class EconomicalAgentNode:
     Module 1: Official Sources (CSE Stock Data, Local Economic News)
     Module 2: Social Media (National, Sectoral, World)
     Module 3: Feed Generation (Categorize, Summarize, Format)
+    
+    Thread Safety:
+        Each EconomicalAgentNode instance creates its own private ToolSet,
+        enabling safe parallel execution with other agents.
     """
     
     def __init__(self, llm=None):
-        """Initialize with Groq LLM"""
+        """Initialize with Groq LLM and private tool set"""
+        # Create PRIVATE tool instances for this agent
+        self.tools = create_tool_set()
+        
         if llm is None:
             groq = GroqLLM()
             self.llm = groq.get_llm()
@@ -53,7 +63,7 @@ class EconomicalAgentNode:
         
         # CSE Stock Data
         try:
-            stock_tool = TOOL_MAPPING.get("scrape_cse_stock_data")
+            stock_tool = self.tools.get("scrape_cse_stock_data")
             if stock_tool:
                 stock_data = stock_tool.invoke({
                     "symbol": "ASPI",
@@ -73,7 +83,7 @@ class EconomicalAgentNode:
         
         # Local Economic News
         try:
-            news_tool = TOOL_MAPPING.get("scrape_local_news")
+            news_tool = self.tools.get("scrape_local_news")
             if news_tool:
                 news_data = news_tool.invoke({
                     "keywords": ["sri lanka economy", "sri lanka market", "sri lanka business", 
@@ -110,7 +120,7 @@ class EconomicalAgentNode:
         
         # Twitter - National Economy
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "sri lanka economy market business",
@@ -129,7 +139,7 @@ class EconomicalAgentNode:
         
         # Facebook - National Economy
         try:
-            facebook_tool = TOOL_MAPPING.get("scrape_facebook")
+            facebook_tool = self.tools.get("scrape_facebook")
             if facebook_tool:
                 facebook_data = facebook_tool.invoke({
                     "keywords": ["sri lanka economy", "sri lanka business"],
@@ -148,7 +158,7 @@ class EconomicalAgentNode:
         
         # LinkedIn - National Economy
         try:
-            linkedin_tool = TOOL_MAPPING.get("scrape_linkedin")
+            linkedin_tool = self.tools.get("scrape_linkedin")
             if linkedin_tool:
                 linkedin_data = linkedin_tool.invoke({
                     "keywords": ["sri lanka economy", "sri lanka market"],
@@ -167,7 +177,7 @@ class EconomicalAgentNode:
         
         # Instagram - National Economy
         try:
-            instagram_tool = TOOL_MAPPING.get("scrape_instagram")
+            instagram_tool = self.tools.get("scrape_instagram")
             if instagram_tool:
                 instagram_data = instagram_tool.invoke({
                     "keywords": ["srilankaeconomy", "srilankabusiness"],
@@ -186,7 +196,7 @@ class EconomicalAgentNode:
         
         # Reddit - National Economy
         try:
-            reddit_tool = TOOL_MAPPING.get("scrape_reddit")
+            reddit_tool = self.tools.get("scrape_reddit")
             if reddit_tool:
                 reddit_data = reddit_tool.invoke({
                     "keywords": ["sri lanka economy", "sri lanka market"],
@@ -220,7 +230,7 @@ class EconomicalAgentNode:
         for sector in self.key_sectors:
             # Twitter per sector
             try:
-                twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+                twitter_tool = self.tools.get("scrape_twitter")
                 if twitter_tool:
                     twitter_data = twitter_tool.invoke({
                         "query": f"sri lanka {sector}",
@@ -240,7 +250,7 @@ class EconomicalAgentNode:
             
             # Facebook per sector
             try:
-                facebook_tool = TOOL_MAPPING.get("scrape_facebook")
+                facebook_tool = self.tools.get("scrape_facebook")
                 if facebook_tool:
                     facebook_data = facebook_tool.invoke({
                         "keywords": [f"sri lanka {sector}"],
@@ -273,7 +283,7 @@ class EconomicalAgentNode:
         
         # Twitter - World Economy
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "sri lanka IMF world bank international trade",
@@ -436,22 +446,53 @@ Sectors monitored: {', '.join([s.title() for s in self.key_sectors])}
 Source: Multi-platform aggregation (Twitter, Facebook, LinkedIn, Instagram, Reddit, CSE, Local News)
 """
         
-        # Create integration output
-        insight = {
+        # Create list for per-sector domain_insights (FRONTEND COMPATIBLE)
+        domain_insights = []
+        timestamp = datetime.utcnow().isoformat()
+        
+        # 1. Create per-item economical insights
+        for category, posts in structured_feeds.items():
+            if not isinstance(posts, list):
+                continue
+            for post in posts[:10]:
+                post_text = post.get("text", "") or post.get("title", "")
+                if not post_text or len(post_text) < 10:
+                    continue
+                
+                # Determine severity based on keywords
+                severity = "medium"
+                if any(kw in post_text.lower() for kw in ["inflation", "crisis", "crash", "recession", "bankruptcy"]):
+                    severity = "high"
+                elif any(kw in post_text.lower() for kw in ["growth", "profit", "investment", "opportunity"]):
+                    severity = "low"
+                
+                impact = "risk" if severity == "high" else "opportunity" if severity == "low" else "risk"
+                
+                domain_insights.append({
+                    "source_event_id": str(uuid.uuid4()),
+                    "domain": "economical",
+                    "summary": f"Sri Lanka Economy ({category.title()}): {post_text[:200]}",
+                    "severity": severity,
+                    "impact_type": impact,
+                    "timestamp": timestamp
+                })
+        
+        # 2. Add executive summary insight
+        domain_insights.append({
             "source_event_id": str(uuid.uuid4()),
             "structured_data": structured_feeds,
             "domain": "economical",
-            "summary": llm_summary[:500],
+            "summary": f"Sri Lanka Economic Summary: {llm_summary[:300]}",
             "severity": "medium",
             "impact_type": "risk"
-        }
+        })
         
-        print("  ✓ Final Feed Formatted")
+        print(f"  ✓ Created {len(domain_insights)} economic insights")
         
         return {
             "final_feed": bulletin,
             "feed_history": [bulletin],
-            "domain_insights": [insight]
+            "domain_insights": domain_insights
         }
     
     # ============================================

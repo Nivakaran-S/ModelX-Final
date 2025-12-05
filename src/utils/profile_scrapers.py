@@ -791,13 +791,15 @@ def scrape_product_reviews(product_keyword: str, platforms: Optional[List[str]] 
     all_reviews = []
     
     try:
-        # Import tools
-        from src.utils.utils import TOOL_MAPPING
+        # Import tool factory for independent tool instances
+        # This ensures parallel execution safety
+        from src.utils.tool_factory import create_tool_set
+        local_tools = create_tool_set()
         
         # Reddit reviews
         if "reddit" in platforms:
             try:
-                reddit_tool = TOOL_MAPPING.get("scrape_reddit")
+                reddit_tool = local_tools.get("scrape_reddit")
                 if reddit_tool:
                     reddit_data = reddit_tool.invoke({
                         "keywords": [f"{product_keyword} review", product_keyword],
@@ -820,7 +822,7 @@ def scrape_product_reviews(product_keyword: str, platforms: Optional[List[str]] 
         # Twitter reviews
         if "twitter" in platforms:
             try:
-                twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+                twitter_tool = local_tools.get("scrape_twitter")
                 if twitter_tool:
                     twitter_data = twitter_tool.invoke({
                         "query": f"{product_keyword} review OR {product_keyword} rating",
@@ -850,3 +852,4 @@ def scrape_product_reviews(product_keyword: str, platforms: Optional[List[str]] 
     except Exception as e:
         logger.error(f"[PRODUCT_REVIEWS] {e}")
         return json.dumps({"error": str(e)}, default=str)
+

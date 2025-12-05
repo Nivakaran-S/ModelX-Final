@@ -2,6 +2,9 @@
 src/nodes/dataRetrievalAgentNode.py
 COMPLETE - Data Retrieval Agent Node Implementation
 Handles orchestrator-worker pattern for scraping tasks
+
+Updated: Uses Tool Factory pattern for parallel execution safety.
+Each agent instance gets its own private set of tools.
 """
 import json
 import uuid
@@ -14,7 +17,8 @@ from src.states.dataRetrievalAgentState import (
     RawScrapedData, 
     ClassifiedEvent
 )
-from src.utils.utils import TOOL_MAPPING
+from src.utils.tool_factory import create_tool_set
+from src.utils.utils import TOOL_MAPPING  # Keep for backward compatibility
 
 
 class DataRetrievalAgentNode:
@@ -24,9 +28,16 @@ class DataRetrievalAgentNode:
     2. Worker Agent - Executes individual tasks
     3. Tool Node - Runs the actual tools
     4. Classifier Agent - Categorizes results for domain agents
+    
+    Thread Safety:
+        Each DataRetrievalAgentNode instance creates its own private ToolSet,
+        enabling safe parallel execution with other agents.
     """
     
     def __init__(self, llm):
+        """Initialize with LLM and private tool set"""
+        # Create PRIVATE tool instances for this agent
+        self.tools = create_tool_set()
         self.llm = llm
 
     # =========================================================================
@@ -51,7 +62,7 @@ class DataRetrievalAgentNode:
         system_prompt = f"""
 You are the Master Data Retrieval Agent for ModelX - Sri Lanka's situational awareness platform.
 
-AVAILABLE TOOLS: {list(TOOL_MAPPING.keys())}
+AVAILABLE TOOLS: {list(self.tools.as_dict().keys())}
 
 Your job:
 1. Decide which tools to run to keep the system updated
@@ -181,7 +192,7 @@ If no tasks needed, return []
         
         print(f"[TOOL NODE] Executing -> {current_task.tool_name}")
         
-        tool_func = TOOL_MAPPING.get(current_task.tool_name)
+        tool_func = self.tools.get(current_task.tool_name)
         
         if tool_func is None:
             output = f"Tool '{current_task.tool_name}' not found in registry"

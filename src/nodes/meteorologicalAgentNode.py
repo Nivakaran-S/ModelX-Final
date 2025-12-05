@@ -2,13 +2,17 @@
 src/nodes/meteorologicalAgentNode.py
 MODULAR - Meteorological Agent Node with Subgraph Architecture
 Three modules: Official Sources, Social Media Collection, Feed Generation
+
+Updated: Uses Tool Factory pattern for parallel execution safety.
+Each agent instance gets its own private set of tools.
 """
 import json
 import uuid
 from typing import List, Dict, Any
 from datetime import datetime
 from src.states.meteorologicalAgentState import MeteorologicalAgentState
-from src.utils.utils import TOOL_MAPPING, tool_dmc_alerts, tool_weather_nowcast
+from src.utils.tool_factory import create_tool_set
+from src.utils.utils import tool_dmc_alerts, tool_weather_nowcast
 from src.llms.groqllm import GroqLLM
 
 
@@ -18,10 +22,17 @@ class MeteorologicalAgentNode:
     Module 1: Official Weather Sources (DMC Alerts, Weather Nowcast)
     Module 2: Social Media (National, District, Climate)
     Module 3: Feed Generation (Categorize, Summarize, Format)
+    
+    Thread Safety:
+        Each MeteorologicalAgentNode instance creates its own private ToolSet,
+        enabling safe parallel execution with other agents.
     """
     
     def __init__(self, llm=None):
-        """Initialize with Groq LLM"""
+        """Initialize with Groq LLM and private tool set"""
+        # Create PRIVATE tool instances for this agent
+        self.tools = create_tool_set()
+        
         if llm is None:
             groq = GroqLLM()
             self.llm = groq.get_llm()
@@ -107,7 +118,7 @@ class MeteorologicalAgentNode:
         
         # Twitter - National Weather
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "sri lanka weather forecast rain",
@@ -126,7 +137,7 @@ class MeteorologicalAgentNode:
         
         # Facebook - National Weather
         try:
-            facebook_tool = TOOL_MAPPING.get("scrape_facebook")
+            facebook_tool = self.tools.get("scrape_facebook")
             if facebook_tool:
                 facebook_data = facebook_tool.invoke({
                     "keywords": ["sri lanka weather", "sri lanka rain"],
@@ -145,7 +156,7 @@ class MeteorologicalAgentNode:
         
         # LinkedIn - Climate & Weather
         try:
-            linkedin_tool = TOOL_MAPPING.get("scrape_linkedin")
+            linkedin_tool = self.tools.get("scrape_linkedin")
             if linkedin_tool:
                 linkedin_data = linkedin_tool.invoke({
                     "keywords": ["sri lanka weather", "sri lanka climate"],
@@ -164,7 +175,7 @@ class MeteorologicalAgentNode:
         
         # Instagram - Weather
         try:
-            instagram_tool = TOOL_MAPPING.get("scrape_instagram")
+            instagram_tool = self.tools.get("scrape_instagram")
             if instagram_tool:
                 instagram_data = instagram_tool.invoke({
                     "keywords": ["srilankaweather"],
@@ -183,7 +194,7 @@ class MeteorologicalAgentNode:
         
         # Reddit - Weather
         try:
-            reddit_tool = TOOL_MAPPING.get("scrape_reddit")
+            reddit_tool = self.tools.get("scrape_reddit")
             if reddit_tool:
                 reddit_data = reddit_tool.invoke({
                     "keywords": ["sri lanka weather", "sri lanka rain"],
@@ -217,7 +228,7 @@ class MeteorologicalAgentNode:
         for district in self.key_districts:
             # Twitter per district
             try:
-                twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+                twitter_tool = self.tools.get("scrape_twitter")
                 if twitter_tool:
                     twitter_data = twitter_tool.invoke({
                         "query": f"{district} sri lanka weather",
@@ -237,7 +248,7 @@ class MeteorologicalAgentNode:
             
             # Facebook per district
             try:
-                facebook_tool = TOOL_MAPPING.get("scrape_facebook")
+                facebook_tool = self.tools.get("scrape_facebook")
                 if facebook_tool:
                     facebook_data = facebook_tool.invoke({
                         "keywords": [f"{district} weather"],
@@ -270,7 +281,7 @@ class MeteorologicalAgentNode:
         
         # Twitter - Climate & Disasters
         try:
-            twitter_tool = TOOL_MAPPING.get("scrape_twitter")
+            twitter_tool = self.tools.get("scrape_twitter")
             if twitter_tool:
                 twitter_data = twitter_tool.invoke({
                     "query": "sri lanka flood drought cyclone disaster",
@@ -442,22 +453,83 @@ Cities: {', '.join(self.key_cities)}
 Source: Multi-platform aggregation (DMC, MetDept, Twitter, Facebook, LinkedIn, Instagram, Reddit)
 """
         
-        # Create integration output
-        insight = {
+        # Create list for per-district domain_insights (FRONTEND COMPATIBLE)
+        domain_insights = []
+        timestamp = datetime.utcnow().isoformat()
+        
+        # 1. Create insights from DMC alerts (high severity)
+        alert_data = structured_feeds.get("alerts", [])
+        for alert in alert_data[:10]:
+            alert_text = alert.get("text", "") or alert.get("title", "")
+            if not alert_text:
+                continue
+            detected_district = "Sri Lanka"
+            for district in self.districts:
+                if district.lower() in alert_text.lower():
+                    detected_district = district.title()
+                    break
+            domain_insights.append({
+                "source_event_id": str(uuid.uuid4()),
+                "domain": "meteorological",
+                "summary": f"{detected_district}: {alert_text[:200]}",
+                "severity": "high" if change_detected else "medium",
+                "impact_type": "risk",
+                "timestamp": timestamp
+            })
+        
+        # 2. Create per-district weather insights
+        for district, posts in district_feeds.items():
+            if not posts:
+                continue
+            for post in posts[:3]:
+                post_text = post.get("text", "") or post.get("title", "")
+                if not post_text or len(post_text) < 10:
+                    continue
+                severity = "low"
+                if any(kw in post_text.lower() for kw in ["flood", "cyclone", "storm", "warning", "alert", "danger"]):
+                    severity = "high"
+                elif any(kw in post_text.lower() for kw in ["rain", "wind", "thunder"]):
+                    severity = "medium"
+                domain_insights.append({
+                    "source_event_id": str(uuid.uuid4()),
+                    "domain": "meteorological",
+                    "summary": f"{district.title()}: {post_text[:200]}",
+                    "severity": severity,
+                    "impact_type": "risk" if severity != "low" else "opportunity",
+                    "timestamp": timestamp
+                })
+        
+        # 3. Create national weather insights
+        national_data = structured_feeds.get("sri lanka weather", [])
+        for post in national_data[:5]:
+            post_text = post.get("text", "") or post.get("title", "")
+            if not post_text or len(post_text) < 10:
+                continue
+            domain_insights.append({
+                "source_event_id": str(uuid.uuid4()),
+                "domain": "meteorological",
+                "summary": f"Sri Lanka Weather: {post_text[:200]}",
+                "severity": "medium",
+                "impact_type": "risk",
+                "timestamp": timestamp
+            })
+        
+        # 4. Add executive summary insight
+        domain_insights.append({
             "source_event_id": str(uuid.uuid4()),
             "structured_data": structured_feeds,
             "domain": "meteorological",
-            "summary": llm_summary[:500],
-            "severity": "medium",
+            "summary": f"Sri Lanka Meteorological Summary: {llm_summary[:300]}",
+            "severity": "high" if change_detected else "medium",
             "impact_type": "risk"
-        }
+        })
         
-        print("  ✓ Final Feed Formatted")
+        print(f"  ✓ Created {len(domain_insights)} per-district weather insights")
         
         return {
             "final_feed": bulletin,
             "feed_history": [bulletin],
-            "domain_insights": [insight]
+            "domain_insights": domain_insights
         }
     
     # ============================================

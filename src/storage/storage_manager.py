@@ -199,6 +199,116 @@ class StorageManager:
         except Exception as e:
             logger.error(f"[CSV] Export error: {e}")
     
+    def get_recent_feeds(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Retrieve recent feeds from SQLite with ChromaDB metadata.
+        
+        Args:
+            limit: Maximum number of feeds to return
+            
+        Returns:
+            List of feed dictionaries with full metadata
+        """
+        try:
+            entries = self.sqlite_cache.get_all_entries(limit=limit, offset=0)
+            
+            feeds = []
+            for entry in entries:
+                event_id = entry.get("event_id")
+                if not event_id:
+                    continue
+                
+                try:
+                    chroma_data = self.chromadb.collection.get(ids=[event_id])
+                    if chroma_data and chroma_data['metadatas']:
+                        metadata = chroma_data['metadatas'][0]
+                        feeds.append({
+                            "event_id": event_id,
+                            "summary": entry.get("summary_preview", ""),
+                            "domain": metadata.get("domain", "unknown"),
+                            "severity": metadata.get("severity", "medium"),
+                            "impact_type": metadata.get("impact_type", "risk"),
+                            "confidence": metadata.get("confidence_score", 0.5),
+                            "timestamp": metadata.get("timestamp", entry.get("last_seen"))
+                        })
+                except Exception as e:
+                    logger.warning(f"Could not fetch ChromaDB data for {event_id}: {e}")
+                    feeds.append({
+                        "event_id": event_id,
+                        "summary": entry.get("summary_preview", ""),
+                        "domain": "unknown",
+                        "severity": "medium",
+                        "impact_type": "risk",
+                        "confidence": 0.5,
+                        "timestamp": entry.get("last_seen")
+                    })
+            
+            return feeds
+            
+        except Exception as e:
+            logger.error(f"[FEED_RETRIEVAL] Error: {e}")
+            return []
+    
+    def get_feeds_since(self, timestamp: datetime) -> List[Dict[str, Any]]:
+        """
+        Get all feeds added after given timestamp.
+        
+        Args:
+            timestamp: Datetime object
+            
+        Returns:
+            List of feed dictionaries
+        """
+        try:
+            iso_timestamp = timestamp.isoformat()
+            entries = self.sqlite_cache.get_entries_since(iso_timestamp)
+            
+            feeds = []
+            for entry in entries:
+                event_id = entry.get("event_id")
+                if not event_id:
+                    continue
+                
+                try:
+                    chroma_data = self.chromadb.collection.get(ids=[event_id])
+                    if chroma_data and chroma_data['metadatas']:
+                        metadata = chroma_data['metadatas'][0]
+                        feeds.append({
+                            "event_id": event_id,
+                            "summary": entry.get("summary_preview", ""),
+                            "domain": metadata.get("domain", "unknown"),
+                            "severity": metadata.get("severity", "medium"),
+                            "impact_type": metadata.get("impact_type", "risk"),
+                            "confidence": metadata.get("confidence_score", 0.5),
+                            "timestamp": metadata.get("timestamp", entry.get("last_seen"))
+                        })
+                except Exception as e:
+                    feeds.append({
+                        "event_id": event_id,
+                        "summary": entry.get("summary_preview", ""),
+                        "domain": "unknown",
+                        "severity": "medium",
+                        "impact_type": "risk",
+                        "confidence": 0.5,
+                        "timestamp": entry.get("last_seen")
+                    })
+            
+            return feeds
+            
+        except Exception as e:
+            logger.error(f"[FEED_RETRIEVAL] Error: {e}")
+            return []
+    
+    def get_feed_count(self) -> int:
+        """Get total feed count from database"""
+        try:
+            stats = self.sqlite_cache.get_stats()
+            return stats.get("total_entries", 0)
+        except Exception as e:
+            logger.error(f"[FEED_COUNT] Error: {e}")
+            return 0
+    
+
     def cleanup_old_data(self):
         """Cleanup old entries from SQLite cache"""
         try:
